@@ -21,10 +21,10 @@ See other examples:
 Goals:
 
 - [x] Deploy container specified via `PUT` to `/system/functions`
-- [ ] Retrieve logs from container
-- [ ] Serve HTTP traffic from deployed container
-- [ ] List running containers
+- [ ] Serve HTTP traffic from deployed container via `/function/NAME`
+- [ ] List running containers via GET on `/system/functions`
 - [ ] Clean-up containers on exit
+- [ ] Give configuration for running faas-containerd / OpenFaaS gateway and Prometheus via systemd unit files or similar
 
 ## Test it out
 
