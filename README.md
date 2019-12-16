@@ -28,6 +28,26 @@ Goals:
 
 ## Test it out
 
+Get and [start containerd](https://github.com/containerd/containerd) on a Linux computer, or VM.
+
+```sh
+sudo containerd
+```
+
+Install Go:
+
+```sh
+curl -SLsf https://dl.google.com/go/go1.12.14.linux-amd64.tar.gz > go.tgz
+sudo rm -rf /usr/local/go/
+sudo mkdir -p /usr/local/go/
+sudo tar -xvf go.tgz -C /usr/local/go/ --strip-components=1
+
+export GOPATH=$HOME/go/
+export PATH=$PATH:/usr/local/go/bin/
+
+go version
+```
+
 Get netns
 
 ```sh
@@ -49,7 +69,7 @@ git clone https://github.com/alexellis/faas-containerd
 cd faas-containerd
 go build
 
-./faas-containerd
+sudo ./faas-containerd
 ```
 
 > Listens on port TCP/8081
@@ -66,6 +86,12 @@ Deploy a function with a server
 ```sh
 curl -d '{"service":"nodeinfo","image":"functions/nodeinfo","envProcess":"node main.js"}' \
   -X PUT http://127.0.0.1:8081/system/functions
+```
+
+List containers:
+
+```sh
+sudo ctr list --namespace openfaas-fn
 ```
 
 ## License
