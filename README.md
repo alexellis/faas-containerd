@@ -12,6 +12,10 @@ Proof of concept.
 
 This project implements the [faas-provider](https://github.com/openfaas/faas-provider) SDK.
 
+![Architecture](https://github.com/openfaas/faas-provider/raw/master/docs/conceptual.png)
+
+*faas-provider conceptual architecture*
+
 See other examples:
 
 * [faas-memory](https://github.com/openfaas-incubator/faas-memory/)
