@@ -1,6 +1,10 @@
 # faas-containerd
 
-OpenFaaS provider for containerd - single node / edge workloads
+[OpenFaaS](https://github.com/openfaas/faas) provider for containerd - single node / edge workloads
+
+What's the use-case?
+
+OpenFaaS providers can be built for any backend, even for an in-memory datastore. Some users could benefit from a lightweight, single-node execution environment. Using containerd and bypassing Kubernetes or Docker should reduce the start-time for functions and allow for running in resource-constrained environments.
 
 ## Status
 
@@ -19,6 +23,8 @@ Goals:
 - [x] Deploy container specified via `PUT` to `/system/functions`
 - [ ] Retrieve logs from container
 - [ ] Serve HTTP traffic from deployed container
+- [ ] List running containers
+- [ ] Clean-up containers on exit
 
 ## Test it out
 
