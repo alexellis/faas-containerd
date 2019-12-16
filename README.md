@@ -6,6 +6,20 @@ OpenFaaS provider for containerd - single node / edge workloads
 
 Proof of concept.
 
+This project implements the [faas-provider](https://github.com/openfaas/faas-provider) SDK.
+
+See other examples:
+
+* [faas-memory](https://github.com/openfaas-incubator/faas-memory/)
+* [faas-swarm](https://github.com/openfaas/faas-swarm/)
+* [faas-netes](https://github.com/openfaas/faas-netes/)
+
+Goals:
+
+- [x] Deploy container specified via `PUT` to `/system/functions`
+- [ ] Retrieve logs from container
+- [ ] Serve HTTP traffic from deployed container
+
 ## Test it out
 
 Get netns
