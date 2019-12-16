@@ -27,6 +27,10 @@ import (
 
 func main() {
 	sock := os.Getenv("sock")
+	if len (sock) == 0 {
+		sock = "/run/containerd/containerd.sock"
+	}
+
 	client, err := containerd.New(sock)
 	if err != nil {
 		panic(err)
@@ -47,7 +51,7 @@ func main() {
 	}
 
 	var port int
-	port = 8082
+	port = 8081
 
 	bootstrapConfig := types.FaaSConfig{
 		ReadTimeout:     time.Second * 8,
