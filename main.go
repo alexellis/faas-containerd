@@ -14,7 +14,6 @@ import (
 
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/cio"
-
 	"github.com/containerd/containerd/containers"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
@@ -174,6 +173,19 @@ func updateHandler(client *containerd.Client) func(w http.ResponseWriter, r *htt
 			}
 
 			log.Printf("Container ID: %s\tTask ID %s:\tTask PID: %d\t\n", container.ID(), task.ID(), task.Pid())
+
+			// https://github.com/weaveworks/weave/blob/master/net/netdev.go
+			processID := task.Pid()
+			peerIDs, err := ConnectedToBridgeVethPeerIds("netns0")
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			addrs, addrsErr := GetNetDevsByVethPeerIds(int(processID), peerIDs)
+			if addrsErr != nil {
+				log.Fatal(addrsErr)
+			}
+			fmt.Println(addrs)
 
 			defer task.Delete(ctx)
 

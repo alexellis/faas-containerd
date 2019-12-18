@@ -271,6 +271,25 @@
   revision = "db04d3cc01c8b54962a58ec7e491717d06cfcc16"
 
 [[projects]]
+  digest = "1:2d9d06cb9d46dacfdbb45f8575b39fc0126d083841a29d4fbf8d97708f43107e"
+  name = "github.com/vishvananda/netlink"
+  packages = [
+    ".",
+    "nl",
+  ]
+  pruneopts = "UT"
+  revision = "a2ad57a690f3caf3015351d2d6e1c0b95c349752"
+  version = "v1.0.0"
+
+[[projects]]
+  branch = "master"
+  digest = "1:975cb0c04431bf92e60b636a15897c4a3faba9f7dc04da505646630ac91d29d3"
+  name = "github.com/vishvananda/netns"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "0a2b9b5464df8343199164a0321edf3313202f7e"
+
+[[projects]]
   digest = "1:949414cae3a7fa992bcf19b86289ff35af015e1a9a02eee1e13c101417ac1f83"
   name = "golang.org/x/net"
   packages = [
@@ -382,6 +401,8 @@
     "github.com/openfaas/faas-provider",
     "github.com/openfaas/faas-provider/types",
     "github.com/openfaas/faas/gateway/requests",
+    "github.com/vishvananda/netlink",
+    "github.com/vishvananda/netns",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

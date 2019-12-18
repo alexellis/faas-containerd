@@ -32,13 +32,24 @@ Goals:
 
 ## Test it out
 
-Get and [start containerd](https://github.com/containerd/containerd) on a Linux computer, or VM.
+Install [containerd](https://github.com/containerd/containerd) on a Linux computer, or VM:
 
-```sh
-sudo containerd
+```
+sudo apt update && sudo apt install -qy containerd golang runc bridge-utils ethtool
 ```
 
-Install Go:
+Check containerd started:
+```sh
+systemctl status containerd
+```
+
+Enable forwarding:
+
+```sh
+/sbin/sysctl -w net.ipv4.conf.all.forwarding=1
+```
+
+Install Go if a newer version is required (optional)
 
 ```sh
 curl -SLsf https://dl.google.com/go/go1.12.14.linux-amd64.tar.gz > go.tgz
@@ -55,15 +66,33 @@ go version
 Get netns
 
 ```sh
-go get -u github.com/genuinetools/netns
-```
+export GOPATH=$HOME/go/
 
-> Make sure "netns" is in $PATH
+go get -u github.com/genuinetools/netns
+sudo mv $GOPATH/bin/netns /usr/bin/
+```
 
 Create [networking configuration for CNI](https://github.com/containernetworking/cni/tree/master/cnitool)
 
 ```sh
-echo '{"cniVersion":"0.4.0","name":"myptp","type":"ptp","ipMasq":true,"ipam":{"type":"host-local","subnet":"172.16.29.0/24","routes":[{"dst":"0.0.0.0/0"}]}}' | sudo tee /etc/cni/net.d/10-myptp.conf
+$ mkdir -p /etc/cni/net.d
+$ cat >/etc/cni/net.d/10-mynet.conf <<EOF
+{
+	"cniVersion": "0.2.0",
+	"name": "mynet",
+	"type": "bridge",
+	"bridge": "cni0",
+	"isGateway": true,
+	"ipMasq": true,
+	"ipam": {
+		"type": "host-local",
+		"subnet": "10.22.0.0/16",
+		"routes": [
+			{ "dst": "0.0.0.0/0" }
+		]
+	}
+}
+EOF
 ```
 
 Build and run
@@ -71,31 +100,50 @@ Build and run
 ```sh
 git clone https://github.com/alexellis/faas-containerd
 cd faas-containerd
-go build
-
-sudo ./faas-containerd
+go build && sudo ./faas-containerd
 ```
 
 > Listens on port TCP/8081
 
 Deploy a container without a server
 
+
 ```sh
-curl -d '{"service":"uptime", "image":"alexellis2/uptime:latest" }' \
-  -X PUT http://127.0.0.1:8081/system/functions
+faas deploy --name uptime --image alexellis2/uptime:latest \
+  -g 127.0.0.1:8081 --update=true --replace=false
 ```
 
 Deploy a function with a server
 
 ```sh
-curl -d '{"service":"nodeinfo","image":"functions/nodeinfo","envProcess":"node main.js"}' \
-  -X PUT http://127.0.0.1:8081/system/functions
+faas store deploy figlet -g 127.0.0.1:8081 --update=true --replace=false
+```
+
+Deploy a ping function with a server
+
+```sh
+faas-cli deploy --image alexellis2/ping:0.1 \
+  -g 127.0.0.1:8081 --update=true --replace=false --name ping
+```
+
+Deploy nodeinfo function with a server
+
+```sh
+faas-cli store deploy nodeinfo \
+  -g 127.0.0.1:8081 --update=true --replace=false
 ```
 
 List containers:
 
 ```sh
 sudo ctr list --namespace openfaas-fn
+```
+
+Delete containers or snapshots:
+
+```sh
+sudo ctr --namespace openfaas-fn snapshot delete figlet
+sudo ctr --namespace openfaas-fn snapshot delete figlet-snapshot
 ```
 
 ## Links
