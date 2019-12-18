@@ -83,6 +83,10 @@ func invokeHandler() func(w http.ResponseWriter, r *http.Request) {
 		}
 
 		closer, err := r.GetBody()
+		if err != nil {
+			log.Println(err)
+			return
+		}
 
 		req, err := http.NewRequest(r.Method, "http://"+v.String()+":8080/", closer)
 		if err != nil {
