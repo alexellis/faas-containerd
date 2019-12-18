@@ -10,7 +10,10 @@ Pros:
 * Fast cold-start
 * containerd features available such as pause/snapshot
 * Super lightweight
-* 
+
+Cons:
+* No clustering (yet)
+* No inter-service communication (yet)
 
 ## Status
 
