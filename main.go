@@ -81,6 +81,7 @@ func invokeHandler() func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
+		fmt.Println(v)
 
 		req, err := http.NewRequest(r.Method, "http://"+v.String()+":8080/", r.Body)
 		if err != nil {
