@@ -35,6 +35,13 @@ func main() {
 		sock = "/run/containerd/containerd.sock"
 	}
 
+	functionUptime := time.Second * 60 * 5
+
+	if val, ok := os.LookupEnv("function_uptime"); ok {
+		uptime, _ := time.ParseDuration(val)
+		functionUptime = uptime
+	}
+
 	serviceMap = make(map[string]*net.IP)
 
 	client, err := containerd.New(sock)
@@ -81,17 +88,19 @@ func invokeHandler() func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
-		fmt.Println(v)
+		fmt.Println(v, name)
 
 		req, err := http.NewRequest(r.Method, "http://"+v.String()+":8080/", r.Body)
 		if err != nil {
 			log.Println(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
 		res, err := http.DefaultClient.Do(req)
 		if err != nil {
 			log.Println(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		defer res.Body.Close()
@@ -202,6 +211,10 @@ func updateHandler(client *containerd.Client) func(w http.ResponseWriter, r *htt
 
 			defer container.Delete(ctx, containerd.WithSnapshotCleanup)
 
+			defer func() {
+				delete(serviceMap, req.Service)
+			}()
+
 			// create a task from the container
 			task, err := container.NewTask(ctx, cio.NewCreator(cio.WithStdio))
 			if err != nil {
@@ -245,7 +258,7 @@ func updateHandler(client *containerd.Client) func(w http.ResponseWriter, r *htt
 			}
 
 			// sleep for a bit to see the logs
-			time.Sleep(5 * time.Minute)
+			time.Sleep(functionUptime)
 
 			// kill the process and get the exit status
 			if err := task.Kill(ctx, syscall.SIGTERM); err != nil {
