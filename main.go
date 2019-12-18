@@ -120,14 +120,14 @@ func deleteHandler() func(w http.ResponseWriter, r *http.Request) {
 
 func replicaReader() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		vars := mux.Vars(r)
 		functionName := vars["name"]
 
 		if _, ok := serviceMap[functionName]; ok {
-			var found *requests.Function
-			found.Name = functionName
-			found.AvailableReplicas = 1
+			found := requests.Function{
+				Name:              functionName,
+				AvailableReplicas: 1,
+			}
 
 			functionBytes, _ := json.Marshal(found)
 			w.Header().Set("Content-Type", "application/json")
