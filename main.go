@@ -31,6 +31,9 @@ var serviceMap map[string]*net.IP
 var functionUptime time.Duration
 
 func main() {
+
+	log.Printf("faas-containerd starting..\n")
+
 	sock := os.Getenv("sock")
 	if len(sock) == 0 {
 		sock = "/run/containerd/containerd.sock"
@@ -64,16 +67,22 @@ func main() {
 		InfoHandler: func(w http.ResponseWriter, r *http.Request) {},
 	}
 
-	var port int
-	port = 8081
+	port := 8081
+
+	timeout := time.Second * 60
 
 	bootstrapConfig := types.FaaSConfig{
-		ReadTimeout:     time.Second * 8,
-		WriteTimeout:    time.Second * 8,
+		ReadTimeout:     timeout,
+		WriteTimeout:    timeout,
 		TCPPort:         &port,
 		EnableBasicAuth: false,
-		EnableHealth:    false,
+		EnableHealth:    true,
 	}
+
+	log.Printf("TCP port: %d\tTimeout: %s\tFunction uptime: %s\n",
+		port,
+		timeout.String(),
+		functionUptime.String())
 
 	bootstrap.Serve(&bootstrapHandlers, &bootstrapConfig)
 }
