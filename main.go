@@ -191,8 +191,8 @@ func updateHandler(client *containerd.Client) func(w http.ResponseWriter, r *htt
 				return
 			}
 
-			// sleep for a lil bit to see the logs
-			time.Sleep(3 * time.Minute)
+			// sleep for a bit to see the logs
+			time.Sleep(5 * time.Minute)
 
 			// kill the process and get the exit status
 			if err := task.Kill(ctx, syscall.SIGTERM); err != nil {
