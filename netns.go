@@ -1,5 +1,8 @@
 // +build go1.10
 
+// Copyright Weaveworks
+// github.com/weaveworks/weave/net
+
 package main
 
 import (
