@@ -98,6 +98,10 @@ List containers:
 sudo ctr list --namespace openfaas-fn
 ```
 
+## Links
+
+* [Detailed explanation on netns](https://pierrchen.blogspot.com/2018/05/understand-container-6-hooks-and-network.html)
+
 ## License
 
 MIT

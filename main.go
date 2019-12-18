@@ -27,7 +27,7 @@ import (
 
 func main() {
 	sock := os.Getenv("sock")
-	if len (sock) == 0 {
+	if len(sock) == 0 {
 		sock = "/run/containerd/containerd.sock"
 	}
 
@@ -149,12 +149,14 @@ func updateHandler(client *containerd.Client) func(w http.ResponseWriter, r *htt
 
 			id := req.Service
 
+			// CAP_NET_RAW enable ping
+
 			container, err := client.NewContainer(
 				ctx,
 				id,
 				containerd.WithImage(image),
 				containerd.WithNewSnapshot(req.Service+"-snapshot", image),
-				containerd.WithNewSpec(oci.WithImageConfig(image), hook),
+				containerd.WithNewSpec(oci.WithImageConfig(image), oci.WithCapabilities([]string{"CAP_NET_RAW"}), hook),
 			)
 
 			if err != nil {
@@ -170,6 +172,9 @@ func updateHandler(client *containerd.Client) func(w http.ResponseWriter, r *htt
 				log.Println(err)
 				return
 			}
+
+			log.Printf("Container ID: %s\tTask ID %s:\tTask PID: %d\t\n", container.ID(), task.ID(), task.Pid())
+
 			defer task.Delete(ctx)
 
 			// make sure we wait before calling start
