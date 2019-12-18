@@ -28,6 +28,7 @@ import (
 )
 
 var serviceMap map[string]*net.IP
+var functionUptime time.Duration
 
 func main() {
 	sock := os.Getenv("sock")
@@ -35,7 +36,7 @@ func main() {
 		sock = "/run/containerd/containerd.sock"
 	}
 
-	functionUptime := time.Second * 60 * 5
+	functionUptime = time.Second * 60 * 5
 
 	if val, ok := os.LookupEnv("function_uptime"); ok {
 		uptime, _ := time.ParseDuration(val)
