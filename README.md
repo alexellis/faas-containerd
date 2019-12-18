@@ -85,7 +85,7 @@ mkdir -p $GOPATH/src/github.com/alexellis/faas-containerd
 cd $GOPATH/src/github.com/alexellis/faas-containerd
 git clone https://github.com/alexellis/faas-containerd
 cd faas-containerd
-go build && sudo ./faas-containerd
+go build && sudo function_uptime=120m ./faas-containerd
 ```
 
 > Listens on port TCP/8081
