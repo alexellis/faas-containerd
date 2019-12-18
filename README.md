@@ -25,20 +25,25 @@ See other examples:
 Goals:
 
 - [x] Deploy container specified via `PUT` to `/system/functions`
-- [ ] Serve HTTP traffic from deployed container via `/function/NAME`
-- [ ] List running containers via GET on `/system/functions`
+- [x] Serve HTTP traffic from deployed container via `/function/NAME`
+- [x] List running containers via GET on `/system/functions`
 - [ ] Clean-up containers on exit
 - [ ] Give configuration for running faas-containerd / OpenFaaS gateway and Prometheus via systemd unit files or similar
 
 ## Test it out
 
-Install [containerd](https://github.com/containerd/containerd) on a Linux computer, or VM:
+You need a Linux computer, VM, or bare-metal cloud host.
+
+I used Ubuntu 18.04 LTS on [Packet.com using the c1.small.x86](https://www.packet.com/cloud/servers/c1-small/) host. You can use [multipass.run](https://multipass.run) to get an Ubuntu host on any OS - Windows, MacOS, or Linux.
+
+Install [containerd](https://github.com/containerd/containerd):
 
 ```
 sudo apt update && sudo apt install -qy containerd golang runc bridge-utils ethtool
 ```
 
 Check containerd started:
+
 ```sh
 systemctl status containerd
 ```
@@ -133,7 +138,26 @@ faas-cli store deploy nodeinfo \
   -g 127.0.0.1:8081 --update=true --replace=false
 ```
 
-List containers:
+Try to list functions:
+
+```sh
+faas-cli list -g 127.0.0.1:8081
+```
+
+Get a function's status:
+```sh
+faas-cli describe nodeinfo -g 127.0.0.1:8081
+```
+
+Try to invoke a function:
+
+```sh
+echo "-c 1 8.8.8.8" | faas-cli invoke ping -g 127.0.0.1:8081
+
+echo "verbose" | faas-cli invoke nodeinfo -g 127.0.0.1:8081
+```
+
+List containers with `ctr`:
 
 ```sh
 sudo ctr list --namespace openfaas-fn
@@ -153,4 +177,3 @@ sudo ctr --namespace openfaas-fn snapshot delete figlet-snapshot
 ## License
 
 MIT
-
