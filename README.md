@@ -36,6 +36,12 @@ Goals:
 - [ ] Clean-up containers on exit
 - [ ] Give configuration for running faas-containerd / OpenFaaS gateway and Prometheus via systemd unit files or similar
 
+## Demo
+
+![](https://pbs.twimg.com/media/EMEg1OEWkAAIDPO?format=jpg&name=medium)
+
+* [View the Tweet](https://twitter.com/alexellisuk/status/1207282296459595776)
+
 ## Test it out
 
 You need a Linux computer, VM, or bare-metal cloud host.
