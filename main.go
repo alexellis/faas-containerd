@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/exec"
@@ -17,6 +19,7 @@ import (
 	"github.com/containerd/containerd/containers"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
+	"github.com/gorilla/mux"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	bootstrap "github.com/openfaas/faas-provider"
 	"github.com/openfaas/faas-provider/types"
@@ -24,11 +27,15 @@ import (
 	"github.com/openfaas/faas/gateway/requests"
 )
 
+var serviceMap map[string]*net.IP
+
 func main() {
 	sock := os.Getenv("sock")
 	if len(sock) == 0 {
 		sock = "/run/containerd/containerd.sock"
 	}
+
+	serviceMap = make(map[string]*net.IP)
 
 	client, err := containerd.New(sock)
 	if err != nil {
@@ -37,7 +44,7 @@ func main() {
 	defer client.Close()
 
 	bootstrapHandlers := types.FaaSHandlers{
-		FunctionProxy:  func(w http.ResponseWriter, r *http.Request) {},
+		FunctionProxy:  invokeHandler(),
 		DeleteHandler:  deleteHandler(),
 		DeployHandler:  deployHandler(),
 		FunctionReader: readHandler(),
@@ -61,6 +68,37 @@ func main() {
 	}
 
 	bootstrap.Serve(&bootstrapHandlers, &bootstrapConfig)
+}
+
+func invokeHandler() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		vars := mux.Vars(r)
+		name := vars["name"]
+
+		v, ok := serviceMap[name]
+		if !ok {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
+		closer, err := r.GetBody()
+
+		req, err := http.NewRequest(r.Method, "http://"+v.String()+":8080/", closer)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+
+		res, err := http.DefaultClient.Do(req)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		defer res.Body.Close()
+
+		io.Copy(w, res.Body)
+	}
 }
 
 func deleteHandler() func(w http.ResponseWriter, r *http.Request) {
@@ -185,7 +223,11 @@ func updateHandler(client *containerd.Client) func(w http.ResponseWriter, r *htt
 			if addrsErr != nil {
 				log.Fatal(addrsErr)
 			}
-			fmt.Println(addrs)
+			if len(addrs) > 0 {
+				serviceMap[req.Service] = &addrs[0].CIDRs[0].IP
+			}
+
+			fmt.Println("Service IP: ", serviceMap[req.Service])
 
 			defer task.Delete(ctx)
 

@@ -397,6 +397,7 @@
     "github.com/containerd/containerd/containers",
     "github.com/containerd/containerd/namespaces",
     "github.com/containerd/containerd/oci",
+    "github.com/gorilla/mux",
     "github.com/opencontainers/runtime-spec/specs-go",
     "github.com/openfaas/faas-provider",
     "github.com/openfaas/faas-provider/types",
