@@ -6,6 +6,12 @@ What's the use-case?
 
 OpenFaaS providers can be built for any backend, even for an in-memory datastore. Some users could benefit from a lightweight, single-node execution environment. Using containerd and bypassing Kubernetes or Docker should reduce the start-time for functions and allow for running in resource-constrained environments.
 
+Pros:
+* Fast cold-start
+* containerd features available such as pause/snapshot
+* Super lightweight
+* 
+
 ## Status
 
 Proof of concept.
@@ -39,7 +45,8 @@ I used Ubuntu 18.04 LTS on [Packet.com using the c1.small.x86](https://www.packe
 Install [containerd](https://github.com/containerd/containerd):
 
 ```
-sudo apt update && sudo apt install -qy containerd golang runc bridge-utils ethtool
+sudo apt update && \
+  sudo apt install -qy containerd golang runc bridge-utils ethtool tmux git
 ```
 
 Check containerd started:
@@ -54,20 +61,6 @@ Enable forwarding:
 /sbin/sysctl -w net.ipv4.conf.all.forwarding=1
 ```
 
-Install Go if a newer version is required (optional)
-
-```sh
-curl -SLsf https://dl.google.com/go/go1.12.14.linux-amd64.tar.gz > go.tgz
-sudo rm -rf /usr/local/go/
-sudo mkdir -p /usr/local/go/
-sudo tar -xvf go.tgz -C /usr/local/go/ --strip-components=1
-
-export GOPATH=$HOME/go/
-export PATH=$PATH:/usr/local/go/bin/
-
-go version
-```
-
 Get netns
 
 ```sh
@@ -77,32 +70,13 @@ go get -u github.com/genuinetools/netns
 sudo mv $GOPATH/bin/netns /usr/bin/
 ```
 
-Create [networking configuration for CNI](https://github.com/containernetworking/cni/tree/master/cnitool)
-
-```sh
-$ mkdir -p /etc/cni/net.d
-$ cat >/etc/cni/net.d/10-mynet.conf <<EOF
-{
-	"cniVersion": "0.2.0",
-	"name": "mynet",
-	"type": "bridge",
-	"bridge": "cni0",
-	"isGateway": true,
-	"ipMasq": true,
-	"ipam": {
-		"type": "host-local",
-		"subnet": "10.22.0.0/16",
-		"routes": [
-			{ "dst": "0.0.0.0/0" }
-		]
-	}
-}
-EOF
-```
-
 Build and run
 
 ```sh
+export GOPATH=$HOME/go/
+
+mkdir -p $GOPATH/src/github.com/alexellis/faas-containerd
+cd $GOPATH/src/github.com/alexellis/faas-containerd
 git clone https://github.com/alexellis/faas-containerd
 cd faas-containerd
 go build && sudo ./faas-containerd
@@ -110,12 +84,10 @@ go build && sudo ./faas-containerd
 
 > Listens on port TCP/8081
 
-Deploy a container without a server
-
+Get the OpenFaaS CLI:
 
 ```sh
-faas deploy --name uptime --image alexellis2/uptime:latest \
-  -g 127.0.0.1:8081 --update=true --replace=false
+curl -sLfS https://cli.openfaas.com | sudo sh
 ```
 
 Deploy a function with a server
@@ -168,6 +140,54 @@ Delete containers or snapshots:
 ```sh
 sudo ctr --namespace openfaas-fn snapshot delete figlet
 sudo ctr --namespace openfaas-fn snapshot delete figlet-snapshot
+```
+
+* Appendix
+
+
+Install Go if a newer version is required (optional)
+
+```sh
+curl -SLsf https://dl.google.com/go/go1.12.14.linux-amd64.tar.gz > go.tgz
+sudo rm -rf /usr/local/go/
+sudo mkdir -p /usr/local/go/
+sudo tar -xvf go.tgz -C /usr/local/go/ --strip-components=1
+
+export GOPATH=$HOME/go/
+export PATH=$PATH:/usr/local/go/bin/
+
+go version
+```
+
+Deploy a container without a server
+
+```sh
+faas deploy --name uptime --image alexellis2/uptime:latest \
+  -g 127.0.0.1:8081 --update=true --replace=false
+```
+
+
+Create [networking configuration for CNI](https://github.com/containernetworking/cni/tree/master/cnitool)
+
+```sh
+$ mkdir -p /etc/cni/net.d
+$ cat >/etc/cni/net.d/10-mynet.conf <<EOF
+{
+	"cniVersion": "0.2.0",
+	"name": "mynet",
+	"type": "bridge",
+	"bridge": "cni0",
+	"isGateway": true,
+	"ipMasq": true,
+	"ipam": {
+		"type": "host-local",
+		"subnet": "10.22.0.0/16",
+		"routes": [
+			{ "dst": "0.0.0.0/0" }
+		]
+	}
+}
+EOF
 ```
 
 ## Links
