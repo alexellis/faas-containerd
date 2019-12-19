@@ -38,6 +38,17 @@
   revision = "9e921883ac929bbe515b39793ece99ce3a9d7706"
 
 [[projects]]
+  digest = "1:730d40e6f29229d75a18dc4a89332beb726fd89d80a83a5c6c51c3f7719a3d26"
+  name = "github.com/alexellis/faas-containerd"
+  packages = [
+    "config",
+    "handlers",
+  ]
+  pruneopts = "UT"
+  revision = "16419987fbcc80b71c8697f3bc0c0a4358bb55b0"
+  version = "0.4.0"
+
+[[projects]]
   digest = "1:2ea7c50ec71417e3db87667c758b976d15536e347f198775b130ad41f97bccb4"
   name = "github.com/alexellis/faasd"
   packages = ["pkg/service"]
@@ -356,14 +367,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:a76bac71eb452a046b47f82336ba792d8de988688a912f3fd0e8ec8e57fe1bb4"
+  digest = "1:dab7f636e7fc0e8a5b61ca4cd3f13107717c6147fd25e9010d930f001e485ec3"
   name = "golang.org/x/sys"
   packages = [
     "unix",
     "windows",
   ]
   pruneopts = "UT"
-  revision = "af0d71d358abe0ba3594483a5d519f429dbae3e9"
+  revision = "c96a22e43c9c1088b5e506727c975511357d9f68"
 
 [[projects]]
   digest = "1:8d8faad6b12a3a4c819a3f9618cb6ee1fa1cfc33253abeeea8b55336721e3405"
@@ -445,6 +456,8 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/alexellis/faas-containerd/config",
+    "github.com/alexellis/faas-containerd/handlers",
     "github.com/alexellis/faasd/pkg/service",
     "github.com/containerd/containerd",
     "github.com/containerd/containerd/cio",
