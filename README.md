@@ -151,10 +151,17 @@ sudo ctr --namespace openfaas-fn snapshot delete figlet
 sudo ctr --namespace openfaas-fn snapshot delete figlet-snapshot
 ```
 
-* Appendix
+### Appendix
 
+* Run with Docker, if required
 
-Install Go if a newer version is required (optional)
+```sh
+docker run -p 8081:8081 \
+  -v /run/containerd/containerd.sock:/run/containerd/containerd.sock \
+  -ti alexellis2/faas-containerd:0.1.0
+```
+
+* Install Go 1.12 (if required)
 
 ```sh
 curl -SLsf https://dl.google.com/go/go1.12.14.linux-amd64.tar.gz > go.tgz
