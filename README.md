@@ -51,11 +51,39 @@ You need a Linux computer, VM, or bare-metal cloud host.
 
 I used Ubuntu 18.04 LTS on [Packet.com using the c1.small.x86](https://www.packet.com/cloud/servers/c1-small/) host. You can use [multipass.run](https://multipass.run) to get an Ubuntu host on any OS - Windows, MacOS, or Linux.
 
-Install [containerd](https://github.com/containerd/containerd):
+* Get some build dependencies
 
-```
+```sh
 sudo apt update && \
-  sudo apt install -qy containerd golang runc bridge-utils ethtool tmux git
+  sudo apt install -qy runc bridge-utils ethtool tmux git \
+  	build-essentials libbtrfs-dev libseccomp-dev
+```
+
+* Install Go 1.12
+```sh
+curl -SLsf https://dl.google.com/go/go1.12.14.linux-amd64.tar.gz > go.tgz
+sudo rm -rf /usr/local/go/
+sudo mkdir -p /usr/local/go/
+sudo tar -xvf go.tgz -C /usr/local/go/ --strip-components=1
+
+export GOPATH=$HOME/go/
+export PATH=$PATH:/usr/local/go/bin/
+
+go version
+```
+
+* Clone / build / install  [containerd](https://github.com/containerd/containerd) v1.3.2
+
+```sh
+export GOPATH=$HOME/go/
+mkdir -p $GOPATH/src/github.com/containerd
+cd $GOPATH/src/github.com/containerd
+git clone https://github.com/containerd/containerd
+cd containerd
+git checkout v1.3.2
+
+make
+sudo make install
 ```
 
 Check containerd started:
@@ -159,20 +187,6 @@ sudo ctr --namespace openfaas-fn snapshot delete figlet-snapshot
 docker run -p 8081:8081 \
   -v /run/containerd/containerd.sock:/run/containerd/containerd.sock \
   -ti alexellis2/faas-containerd:0.1.0
-```
-
-* Install Go 1.12 (if required)
-
-```sh
-curl -SLsf https://dl.google.com/go/go1.12.14.linux-amd64.tar.gz > go.tgz
-sudo rm -rf /usr/local/go/
-sudo mkdir -p /usr/local/go/
-sudo tar -xvf go.tgz -C /usr/local/go/ --strip-components=1
-
-export GOPATH=$HOME/go/
-export PATH=$PATH:/usr/local/go/bin/
-
-go version
 ```
 
 Deploy a container without a server

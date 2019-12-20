@@ -1,9 +1,10 @@
-FROM golang:1.11 as build
+FROM golang:1.12 as build
 ENV CGO_ENABLED=0
 
 WORKDIR /go/src/github.com/alexellis/faas-containerd
 COPY vendor vendor
 
+COPY .git .git
 COPY main.go main.go
 COPY weave.go weave.go
 COPY netns.go netns.go
@@ -13,11 +14,11 @@ RUN gofmt -l -d $(find . -type f -name '*.go' -not -path "./vendor/*") \
     && VERSION=$(git describe --all --exact-match `git rev-parse HEAD` | grep tags | sed 's/tags\///') \
     && GIT_COMMIT=$(git rev-list -1 HEAD) \
     && CGO_ENABLED=0 GOOS=linux go build --ldflags "-s -w \
-        -X github.com/alexellis/faas-containerd/version.GitCommit=${GIT_COMMIT}\
-        -X github.com/alexellis/faas-containerd/version.Version=${VERSION}" \
+        -X github.com/alexellis/faas-containerd/pkg.GitCommit=${GIT_COMMIT}\
+        -X github.com/alexellis/faas-containerd/pkg.Version=${VERSION}" \
         -a -installsuffix cgo -o faas-containerd .
 
-FROM alpine:3.10 as ship
+FROM alpine:3.11 as ship
 
 LABEL org.label-schema.license="MIT" \
       org.label-schema.vcs-url="https://github.com/alexellis/faas-containerd" \
