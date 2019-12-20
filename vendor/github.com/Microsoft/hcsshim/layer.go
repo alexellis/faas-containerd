@@ -4,8 +4,7 @@ import (
 	"crypto/sha1"
 	"path/filepath"
 
-	"github.com/Microsoft/hcsshim/internal/guid"
-
+	"github.com/Microsoft/go-winio/pkg/guid"
 	"github.com/Microsoft/hcsshim/internal/wclayer"
 )
 
@@ -74,14 +73,11 @@ type DriverInfo struct {
 	HomeDir string
 }
 
-type FilterLayerReader = wclayer.FilterLayerReader
-type FilterLayerWriter = wclayer.FilterLayerWriter
-
 type GUID [16]byte
 
 func NameToGuid(name string) (id GUID, err error) {
 	g, err := wclayer.NameToGuid(name)
-	return GUID(g), err
+	return g.ToWindowsArray(), err
 }
 
 func NewGUID(source string) *GUID {
@@ -92,7 +88,7 @@ func NewGUID(source string) *GUID {
 }
 
 func (g *GUID) ToString() string {
-	return (guid.GUID)(*g).String()
+	return guid.FromWindowsArray(*g).String()
 }
 
 type LayerReader = wclayer.LayerReader

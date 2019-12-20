@@ -23,8 +23,6 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	bootstrap "github.com/openfaas/faas-provider"
 	"github.com/openfaas/faas-provider/types"
-
-	"github.com/openfaas/faas/gateway/requests"
 )
 
 var serviceMap map[string]*net.IP
@@ -62,9 +60,8 @@ func main() {
 		ReplicaReader:  replicaReader(),
 		ReplicaUpdater: func(w http.ResponseWriter, r *http.Request) {},
 		UpdateHandler:  updateHandler(client),
-		Health:         func(w http.ResponseWriter, r *http.Request) {},
-
-		InfoHandler: func(w http.ResponseWriter, r *http.Request) {},
+		HealthHandler:  func(w http.ResponseWriter, r *http.Request) {},
+		InfoHandler:    func(w http.ResponseWriter, r *http.Request) {},
 	}
 
 	port := 8081
@@ -133,7 +130,7 @@ func replicaReader() func(w http.ResponseWriter, r *http.Request) {
 		functionName := vars["name"]
 
 		if _, ok := serviceMap[functionName]; ok {
-			found := requests.Function{
+			found := types.FunctionStatus{
 				Name:              functionName,
 				AvailableReplicas: 1,
 			}
@@ -151,9 +148,9 @@ func replicaReader() func(w http.ResponseWriter, r *http.Request) {
 func readHandler() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 
-		res := []requests.Function{}
+		res := []types.FunctionStatus{}
 		for k, _ := range serviceMap {
-			res = append(res, requests.Function{
+			res = append(res, types.FunctionStatus{
 				Name: k,
 			})
 		}
@@ -180,7 +177,7 @@ func updateHandler(client *containerd.Client) func(w http.ResponseWriter, r *htt
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		w.WriteHeader(http.StatusOK)
-		req := requests.CreateFunctionRequest{}
+		req := types.FunctionDeployment{}
 
 		defer r.Body.Close()
 
