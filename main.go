@@ -233,7 +233,7 @@ func updateHandler(client *containerd.Client) func(w http.ResponseWriter, r *htt
 			)
 
 			if err != nil {
-				log.Println(err)
+				log.Println("Error starting container", err)
 				return
 			}
 
@@ -246,7 +246,7 @@ func updateHandler(client *containerd.Client) func(w http.ResponseWriter, r *htt
 			// create a task from the container
 			task, err := container.NewTask(ctx, cio.NewCreator(cio.WithStdio))
 			if err != nil {
-				log.Println(err)
+				log.Println("Error starting task", err)
 				return
 			}
 
@@ -277,11 +277,11 @@ func updateHandler(client *containerd.Client) func(w http.ResponseWriter, r *htt
 				log.Println(err)
 				return
 			}
+
 			log.Println(exitStatusC)
 
-			// call start on the task to execute the redis server
 			if err := task.Start(ctx); err != nil {
-				log.Println(err)
+				log.Println("Error starting task", err)
 				return
 			}
 
