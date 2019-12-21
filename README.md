@@ -195,21 +195,12 @@ sudo ctr --namespace openfaas-fn snapshot remove figlet-snapshot
 
 ### Appendix
 
-* Run with Docker, if required
-
-```sh
-docker run -p 8081:8081 \
-  -v /run/containerd/containerd.sock:/run/containerd/containerd.sock \
-  -ti alexellis2/faas-containerd:0.1.0
-```
-
 Deploy a container without a server
 
 ```sh
 faas deploy --name uptime --image alexellis2/uptime:latest \
   -g 127.0.0.1:8081 --update=true --replace=false
 ```
-
 
 Create [networking configuration for CNI](https://github.com/containernetworking/cni/tree/master/cnitool)
 
