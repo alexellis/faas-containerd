@@ -169,14 +169,16 @@ echo "verbose" | faas-cli invoke nodeinfo -g 127.0.0.1:8081
 List containers with `ctr`:
 
 ```sh
-sudo ctr list --namespace openfaas-fn
+sudo ctr --namespace openfaas-fn list
 ```
 
-Delete containers or snapshots:
+Delete container, snapshot and task:
 
 ```sh
-sudo ctr --namespace openfaas-fn snapshot delete figlet
-sudo ctr --namespace openfaas-fn snapshot delete figlet-snapshot
+sudo ctr --namespace openfaas-fn task kill figlet
+sudo ctr --namespace openfaas-fn task delete figlet
+sudo ctr --namespace openfaas-fn container delete figlet
+sudo ctr --namespace openfaas-fn snapshot remove figlet-snapshot
 ```
 
 ### Appendix
