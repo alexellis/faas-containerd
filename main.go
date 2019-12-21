@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"strings"
 	"syscall"
 	"time"
 
@@ -261,6 +262,25 @@ func updateHandler(client *containerd.Client) func(w http.ResponseWriter, r *htt
 			log.Println(image.Name())
 			log.Println(image.Size(ctx))
 
+			envs := []string{}
+			fprocessFound := false
+			fprocess := "fprocess=" + req.EnvProcess
+			if len(req.EnvProcess) > 0 {
+				fprocessFound = true
+			}
+			for _, env := range req.EnvVars {
+				if strings.HasPrefix("fprocess=", env) {
+					fprocessFound = true
+					fprocess = env
+				} else {
+					envs = append(envs, env)
+				}
+			}
+			if fprocessFound {
+				envs = append(envs, fprocess)
+			}
+			fmt.Println("Envs", envs)
+
 			hook := func(_ context.Context, _ oci.Client, _ *containers.Container, s *specs.Spec) error {
 				if s.Hooks == nil {
 					s.Hooks = &specs.Hooks{}
@@ -318,6 +338,7 @@ func updateHandler(client *containerd.Client) func(w http.ResponseWriter, r *htt
 				containerd.WithNewSpec(oci.WithImageConfig(image),
 					oci.WithCapabilities([]string{"CAP_NET_RAW"}),
 					oci.WithMounts(mounts),
+					oci.WithEnv(envs),
 					hook),
 			)
 
