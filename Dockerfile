@@ -1,7 +1,12 @@
 FROM golang:1.12 as build
 ENV CGO_ENABLED=0
 
-RUN go get -u github.com/genuinetools/netns && go install github.com/genuinetools/netns && netns version
+RUN mkdir -p /go/src/github.com/genuinetools/
+WORKDIR /go/src/github.com/genuinetools/
+RUN git clone https://github.com/genuinetools/netns \
+  && cd netns \
+  && go build --ldflags "-s -w" -a -installsuffix cgo -o /go/bin/netns \
+  && /go/bin/netns version
 
 WORKDIR /go/src/github.com/alexellis/faas-containerd
 COPY vendor vendor
@@ -29,10 +34,9 @@ LABEL org.label-schema.license="MIT" \
       org.label-schema.vendor="alexellis" \
       org.label-schema.docker.schema-version="1.0"
 
-RUN addgroup -S app \
-    && adduser -S -g app app \
-    && apk --no-cache add \
-    ca-certificates
+RUN apk --no-cache add \
+    ca-certificates \
+    iptables
 
 WORKDIR /home/app
 
@@ -42,9 +46,8 @@ ENV http_proxy      ""
 ENV https_proxy     ""
 
 COPY --from=0 /go/src/github.com/alexellis/faas-containerd/faas-containerd    .
-RUN chown -R app:app ./
+COPY --from=0 /go/bin/netns /usr/local/bin/netns
 
 USER root
 
 CMD ["./faas-containerd"]
-

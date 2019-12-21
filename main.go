@@ -149,7 +149,7 @@ func readHandler() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		res := []types.FunctionStatus{}
-		for k, _ := range serviceMap {
+		for k := range serviceMap {
 			res = append(res, types.FunctionStatus{
 				Name: k,
 			})
@@ -203,7 +203,9 @@ func updateHandler(client *containerd.Client) func(w http.ResponseWriter, r *htt
 				if s.Hooks == nil {
 					s.Hooks = &specs.Hooks{}
 				}
+
 				netnsPath, err := exec.LookPath("netns")
+				log.Printf("netnsPath: %s\n", netnsPath)
 				if err != nil {
 					return err
 				}
@@ -260,14 +262,15 @@ func updateHandler(client *containerd.Client) func(w http.ResponseWriter, r *htt
 
 			// https://github.com/weaveworks/weave/blob/master/net/netdev.go
 			processID := task.Pid()
-			peerIDs, err := ConnectedToBridgeVethPeerIds("netns0")
+			bridge := "netns0"
+			peerIDs, err := ConnectedToBridgeVethPeerIds(bridge)
 			if err != nil {
-				log.Fatal(err)
+				log.Fatalf("Unable to find peers on: %s %s", bridge, err)
 			}
 
 			addrs, addrsErr := GetNetDevsByVethPeerIds(int(processID), peerIDs)
 			if addrsErr != nil {
-				log.Fatal(addrsErr)
+				log.Fatalf("Unable to find address for veth pair using: %v %s", peerIDs, addrsErr)
 			}
 			if len(addrs) > 0 {
 				serviceMap[req.Service] = &addrs[0].CIDRs[0].IP
@@ -304,4 +307,3 @@ func updateHandler(client *containerd.Client) func(w http.ResponseWriter, r *htt
 
 	}
 }
-
