@@ -222,12 +222,18 @@ func updateHandler(client *containerd.Client) func(w http.ResponseWriter, r *htt
 
 			id := req.Service
 
+			snapshotter := ""
+			if val, ok := os.LookupEnv("snapshotter"); ok {
+				snapshotter = val
+			}
+
 			// CAP_NET_RAW enable ping
 
 			container, err := client.NewContainer(
 				ctx,
 				id,
 				containerd.WithImage(image),
+				containerd.WithSnapshotter(snapshotter),
 				containerd.WithNewSnapshot(req.Service+"-snapshot", image),
 				containerd.WithNewSpec(oci.WithImageConfig(image), oci.WithCapabilities([]string{"CAP_NET_RAW"}), hook),
 			)
@@ -298,3 +304,4 @@ func updateHandler(client *containerd.Client) func(w http.ResponseWriter, r *htt
 
 	}
 }
+

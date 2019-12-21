@@ -1,6 +1,8 @@
 FROM golang:1.12 as build
 ENV CGO_ENABLED=0
 
+RUN go get -u github.com/genuinetools/netns && go install github.com/genuinetools/netns && netns version
+
 WORKDIR /go/src/github.com/alexellis/faas-containerd
 COPY vendor vendor
 
@@ -45,3 +47,4 @@ RUN chown -R app:app ./
 USER root
 
 CMD ["./faas-containerd"]
+
