@@ -121,7 +121,7 @@ func Start() {
 
 	port := 8081
 
-	timeout := time.Second * 60
+	timeout := time.Minute * 120
 
 	bootstrapConfig := types.FaaSConfig{
 		ReadTimeout:     timeout,
