@@ -80,16 +80,25 @@ mkdir -p $GOPATH/src/github.com/containerd
 cd $GOPATH/src/github.com/containerd
 git clone https://github.com/containerd/containerd
 cd containerd
+git fetch origin--tags
 git checkout v1.3.2
 
 make
 sudo make install
 ```
 
-Check containerd started:
+Kill any old containerd version:
 
 ```sh
-systemctl status containerd
+# Kill any old version
+sudo killall containerd
+sudo systemctl disable containerd
+```
+
+Start containerd in a new terminal:
+
+```sh
+sudo containerd &
 ```
 
 Enable forwarding:
@@ -116,10 +125,13 @@ mkdir -p $GOPATH/src/github.com/alexellis/faas-containerd
 cd $GOPATH/src/github.com/alexellis/faas-containerd
 git clone https://github.com/alexellis/faas-containerd
 cd faas-containerd
+
 go build && sudo function_uptime=120m ./faas-containerd
 ```
 
 > Listens on port TCP/8081
+
+## Test out your faas-containerd
 
 Get the OpenFaaS CLI:
 
