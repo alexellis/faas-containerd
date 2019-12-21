@@ -80,7 +80,7 @@ mkdir -p $GOPATH/src/github.com/containerd
 cd $GOPATH/src/github.com/containerd
 git clone https://github.com/containerd/containerd
 cd containerd
-git fetch origin--tags
+git fetch origin --tags
 git checkout v1.3.2
 
 make

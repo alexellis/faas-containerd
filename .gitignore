@@ -1,2 +1,3 @@
 /faas-containerd
 go*.gz
+.idea
