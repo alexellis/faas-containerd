@@ -192,7 +192,7 @@ func updateHandler(client *containerd.Client) func(w http.ResponseWriter, r *htt
 
 			image, err := client.Pull(ctx, req.Image, containerd.WithPullUnpack)
 			if err != nil {
-				log.Println(err)
+				log.Printf("client pull failed: %s\n", err)
 				return
 			}
 
