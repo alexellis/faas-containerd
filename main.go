@@ -15,8 +15,10 @@ import (
 	"time"
 
 	"github.com/containerd/containerd"
+
 	"github.com/containerd/containerd/cio"
 	"github.com/containerd/containerd/containers"
+	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
 	"github.com/gorilla/mux"
@@ -28,8 +30,44 @@ import (
 var serviceMap map[string]*net.IP
 var functionUptime time.Duration
 
-func main() {
+const (
+	cniLoopbackConf = `{
+	"cniVersion": "0.3.1",
+	"name": "loopback",
+	"type": "loopback",
+        "ipam": {
+			"type": "static",
+			"addresses": [
+				{
+				"address": "127.0.0.1/8"
+				}
+			]
+        }
+}
+`
+	cniConfTemplate = `{
+	"cniVersion": "0.3.1",
+	"name": "faasd",
+	"type": "bridge",
+	"bridge": "{{.Bridge}}",
+	"isGateway": true,
+	"hairpinMode": true,
+	"ipMasq": true,
+	"ipam": {
+			"type": "host-local",
+			"subnet": "10.11.0.0/24",
+			"gateway": "10.11.0.1"
+		}
+}
+`
+)
 
+func main() {
+	Start()
+}
+
+// Start faas-containerd
+func Start() {
 	log.Printf("faas-containerd starting..\n")
 
 	sock := os.Getenv("sock")
@@ -55,7 +93,7 @@ func main() {
 	bootstrapHandlers := types.FaaSHandlers{
 		FunctionProxy:  invokeHandler(),
 		DeleteHandler:  deleteHandler(),
-		DeployHandler:  deployHandler(),
+		DeployHandler:  deployHandler(client),
 		FunctionReader: readHandler(),
 		ReplicaReader:  replicaReader(),
 		ReplicaUpdater: func(w http.ResponseWriter, r *http.Request) {},
@@ -161,20 +199,26 @@ func readHandler() func(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func deployHandler() func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
+func deployHandler(client *containerd.Client) func(w http.ResponseWriter, r *http.Request) {
+	return updateHandler(client)
+	// return func(w http.ResponseWriter, r *http.Request) {
 
-		w.WriteHeader(http.StatusOK)
+	// 	w.WriteHeader(http.StatusOK)
 
-		defer r.Body.Close()
+	// 	defer r.Body.Close()
 
-		body, _ := ioutil.ReadAll(r.Body)
-		fmt.Println(string(body))
-	}
+	// 	body, _ := ioutil.ReadAll(r.Body)
+	// 	fmt.Println(string(body))
+	// }
 }
 
 func updateHandler(client *containerd.Client) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+
+		snapshotter := ""
+		if val, ok := os.LookupEnv("snapshotter"); ok {
+			snapshotter = val
+		}
 
 		w.WriteHeader(http.StatusOK)
 		req := types.FunctionDeployment{}
@@ -190,11 +234,7 @@ func updateHandler(client *containerd.Client) func(w http.ResponseWriter, r *htt
 			ctx := namespaces.WithNamespace(context.Background(), "openfaas-fn")
 			req.Image = "docker.io/" + req.Image
 
-			image, err := client.Pull(ctx, req.Image, containerd.WithPullUnpack)
-			if err != nil {
-				log.Printf("client pull failed: %s\n", err)
-				return
-			}
+			image, err := prepareImage(ctx, client, req.Image, snapshotter)
 
 			log.Println(image.Name())
 			log.Println(image.Size(ctx))
@@ -306,4 +346,34 @@ func updateHandler(client *containerd.Client) func(w http.ResponseWriter, r *htt
 		}()
 
 	}
+}
+
+func prepareImage(ctx context.Context, client *containerd.Client, imageName, snapshotter string) (containerd.Image, error) {
+
+	var empty containerd.Image
+	image, err := client.GetImage(ctx, imageName)
+	if err != nil {
+		if !errdefs.IsNotFound(err) {
+			return empty, err
+		}
+
+		img, err := client.Pull(ctx, imageName, containerd.WithPullUnpack)
+		if err != nil {
+			return empty, fmt.Errorf("cannot pull: %s", err)
+		}
+		image = img
+	}
+
+	unpacked, err := image.IsUnpacked(ctx, snapshotter)
+	if err != nil {
+		return empty, fmt.Errorf("cannot check if unpacked: %s", err)
+	}
+
+	if !unpacked {
+		if err := image.Unpack(ctx, snapshotter); err != nil {
+			return empty, fmt.Errorf("cannot unpack: %s", err)
+		}
+	}
+
+	return image, nil
 }

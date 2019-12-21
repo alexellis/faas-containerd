@@ -9,6 +9,7 @@ RUN git clone https://github.com/genuinetools/netns \
   && /go/bin/netns version
 
 WORKDIR /go/src/github.com/alexellis/faas-containerd
+
 COPY vendor vendor
 
 COPY .git .git
