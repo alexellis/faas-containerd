@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"path"
 	"syscall"
 	"time"
 
@@ -73,6 +74,22 @@ func Start() {
 	sock := os.Getenv("sock")
 	if len(sock) == 0 {
 		sock = "/run/containerd/containerd.sock"
+	}
+
+	wd, _ := os.Getwd()
+
+	writeHostsErr := ioutil.WriteFile(path.Join(wd, "hosts"),
+		[]byte(`127.0.0.1	localhost`), 0644)
+
+	if writeHostsErr != nil {
+		log.Fatalln(fmt.Errorf("cannot write hosts file: %s", writeHostsErr).Error())
+	}
+
+	writeResolvErr := ioutil.WriteFile(path.Join(wd, "resolv.conf"),
+		[]byte(`nameserver 8.8.8.8`), 0644)
+
+	if writeResolvErr != nil {
+		log.Fatalln(fmt.Errorf("cannot write resolv.conf file: %s", writeResolvErr).Error())
 	}
 
 	functionUptime = time.Second * 60 * 5
@@ -171,6 +188,7 @@ func replicaReader() func(w http.ResponseWriter, r *http.Request) {
 			found := types.FunctionStatus{
 				Name:              functionName,
 				AvailableReplicas: 1,
+				Replicas:          1,
 			}
 
 			functionBytes, _ := json.Marshal(found)
@@ -235,6 +253,10 @@ func updateHandler(client *containerd.Client) func(w http.ResponseWriter, r *htt
 			req.Image = "docker.io/" + req.Image
 
 			image, err := prepareImage(ctx, client, req.Image, snapshotter)
+			if err != nil {
+				log.Println(err)
+				return
+			}
 
 			log.Println(image.Name())
 			log.Println(image.Size(ctx))
@@ -269,15 +291,34 @@ func updateHandler(client *containerd.Client) func(w http.ResponseWriter, r *htt
 				snapshotter = val
 			}
 
-			// CAP_NET_RAW enable ping
+			wd, _ := os.Getwd()
 
+			mounts := []specs.Mount{}
+			mounts = append(mounts, specs.Mount{
+				Destination: "/etc/resolv.conf",
+				Type:        "bind",
+				Source:      path.Join(wd, "resolv.conf"),
+				Options:     []string{"rbind", "ro"},
+			})
+
+			mounts = append(mounts, specs.Mount{
+				Destination: "/etc/hosts",
+				Type:        "bind",
+				Source:      path.Join(wd, "hosts"),
+				Options:     []string{"rbind", "ro"},
+			})
+
+			// CAP_NET_RAW enable ping
 			container, err := client.NewContainer(
 				ctx,
 				id,
 				containerd.WithImage(image),
 				containerd.WithSnapshotter(snapshotter),
 				containerd.WithNewSnapshot(req.Service+"-snapshot", image),
-				containerd.WithNewSpec(oci.WithImageConfig(image), oci.WithCapabilities([]string{"CAP_NET_RAW"}), hook),
+				containerd.WithNewSpec(oci.WithImageConfig(image),
+					oci.WithCapabilities([]string{"CAP_NET_RAW"}),
+					oci.WithMounts(mounts),
+					hook),
 			)
 
 			if err != nil {
