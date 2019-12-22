@@ -104,7 +104,7 @@ sudo containerd &
 Enable forwarding:
 
 ```sh
-/sbin/sysctl -w net.ipv4.conf.all.forwarding=1
+sudo /sbin/sysctl -w net.ipv4.conf.all.forwarding=1
 ```
 
 Get netns
