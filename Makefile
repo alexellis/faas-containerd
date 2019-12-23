@@ -1,12 +1,15 @@
-.PHONY: all build push
+Version := $(shell git describe --tags --dirty)
+GitCommit := $(shell git rev-parse HEAD)
+LDFLAGS := "-s -w -X main.Version=$(Version) -X main.GitCommit=$(GitCommit)"
 
-TAG?=latest
+.PHONY: all
+all: local
 
-all: build push
+local:
+	CGO_ENABLED=0 GOOS=linux go build -o bin/faas-containerd
 
-build:
-	docker build -t alexellis2/faas-containerd:$(TAG) .
-
-push:
-	docker push alexellis2/faas-containerd:$(TAG)
-
+.PHONY: dist
+dist:
+	CGO_ENABLED=0 GOOS=linux go build -ldflags $(LDFLAGS) -a -installsuffix cgo -o bin/faas-containerd
+	CGO_ENABLED=0 GOOS=linux GOARCH=arm GOARM=6 go build -ldflags $(LDFLAGS) -a -installsuffix cgo -o bin/faas-containerd-armhf
+	CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -ldflags $(LDFLAGS) -a -installsuffix cgo -o bin/faas-containerd-arm64

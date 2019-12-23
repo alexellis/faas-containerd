@@ -32,6 +32,11 @@ import (
 var serviceMap map[string]*net.IP
 var functionUptime time.Duration
 
+var (
+	Version   string
+	GitCommit string
+)
+
 const (
 	cniLoopbackConf = `{
 	"cniVersion": "0.3.1",
@@ -70,7 +75,7 @@ func main() {
 
 // Start faas-containerd
 func Start() {
-	log.Printf("faas-containerd starting..\n")
+	log.Printf("faas-containerd starting..\tVersion: %s\tCommit: %s\n", Version, GitCommit)
 
 	sock := os.Getenv("sock")
 	if len(sock) == 0 {
