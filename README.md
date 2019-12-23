@@ -1,5 +1,8 @@
 # faas-containerd
 
+[![Build
+Status](https://travis-ci.com/alexellis/faas-containerd.svg?branch=master)](https://travis-ci.com/alexellis/faas-containerd)
+
 [OpenFaaS](https://github.com/openfaas/faas) provider for containerd - single node / edge workloads
 
 What's the use-case?
