@@ -124,25 +124,67 @@ sudo /sbin/sysctl -w net.ipv4.conf.all.forwarding=1
 
 ### Get netns
 
-```sh
-export GOPATH=$HOME/go/
+* From binaries:
 
-go get -u github.com/genuinetools/netns
-sudo mv $GOPATH/bin/netns /usr/bin/
-```
+	```sh
+	# For x86_64
+	sudo curl -fSLs "https://github.com/genuinetools/netns/releases/download/v0.5.3/netns-linux-amd64" \
+	  -o "/usr/local/bin/netns" \
+	  && sudo chmod a+x "/usr/local/bin/netns"
+
+	# armhf
+	sudo curl -fSLs "https://github.com/genuinetools/netns/releases/download/v0.5.3/netns-linux-arm" \
+	  -o "/usr/local/bin/netns" \
+	  && sudo chmod a+x "/usr/local/bin/netns"
+
+	# arm64
+	sudo curl -fSLs "https://github.com/genuinetools/netns/releases/download/v0.5.3/netns-linux-arm64" \
+	  -o "/usr/local/bin/netns" \
+	  && sudo chmod a+x "/usr/local/bin/netns"
+	```
+
+* Or build from source:
+
+	```sh
+	export GOPATH=$HOME/go/
+
+	go get -u github.com/genuinetools/netns
+	sudo mv $GOPATH/bin/netns /usr/bin/
+	```
 
 ### Build and run faas-containerd
 
-```sh
-export GOPATH=$HOME/go/
+* Get a binary
 
-mkdir -p $GOPATH/src/github.com/alexellis/faas-containerd
-cd $GOPATH/src/github.com/alexellis/faas-containerd
-git clone https://github.com/alexellis/faas-containerd
-cd faas-containerd
+	```sh
+	# For x86_64
+	sudo curl -fSLs "https://github.com/alexellis/faas-containerd/releases/download/0.1.0/faas-containerd" \
+	  -o "/usr/local/bin/faas-containerd" \
+	  && sudo chmod a+x "/usr/local/bin/faas-containerd"
 
-go build && sudo function_uptime=120m ./faas-containerd
-```
+	# armhf
+	sudo curl -fSLs "https://github.com/alexellis/faas-containerd/releases/download/0.1.0/faas-containerd-armhf" \
+	  -o "/usr/local/bin/faas-containerd" \
+	  && sudo chmod a+x "/usr/local/bin/faas-containerd"
+
+	# arm64
+	sudo curl -fSLs "https://github.com/alexellis/faas-containerd/releases/download/0.1.0/faas-containerd-arm64" \
+	  -o "/usr/local/bin/faas-containerd" \
+	  && sudo chmod a+x "/usr/local/bin/faas-containerd"
+	```
+
+* Build from source
+
+	```sh
+	export GOPATH=$HOME/go/
+
+	mkdir -p $GOPATH/src/github.com/alexellis/faas-containerd
+	cd $GOPATH/src/github.com/alexellis/faas-containerd
+	git clone https://github.com/alexellis/faas-containerd
+	cd faas-containerd
+
+	go build && sudo function_uptime=120m ./faas-containerd
+	```
 
 > Listens on port TCP/8081
 
