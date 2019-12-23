@@ -39,38 +39,6 @@ var (
 	GitCommit string
 )
 
-const (
-	cniLoopbackConf = `{
-	"cniVersion": "0.3.1",
-	"name": "loopback",
-	"type": "loopback",
-        "ipam": {
-			"type": "static",
-			"addresses": [
-				{
-				"address": "127.0.0.1/8"
-				}
-			]
-        }
-}
-`
-	cniConfTemplate = `{
-	"cniVersion": "0.3.1",
-	"name": "faasd",
-	"type": "bridge",
-	"bridge": "{{.Bridge}}",
-	"isGateway": true,
-	"hairpinMode": true,
-	"ipMasq": true,
-	"ipam": {
-			"type": "host-local",
-			"subnet": "10.11.0.0/24",
-			"gateway": "10.11.0.1"
-		}
-}
-`
-)
-
 func main() {
 	Start()
 }
@@ -122,7 +90,6 @@ func Start() {
 	}
 
 	bootstrapHandlers := types.FaaSHandlers{
-		FunctionProxy:        proxy.NewHandlerFunc(config, invokeResolver{}),
 		DeleteHandler:        deleteHandler(),
 		DeployHandler:        deployHandler(client),
 		FunctionReader:       readHandler(),
@@ -131,6 +98,7 @@ func Start() {
 		UpdateHandler:        updateHandler(client),
 		HealthHandler:        func(w http.ResponseWriter, r *http.Request) {},
 		InfoHandler:          func(w http.ResponseWriter, r *http.Request) {},
+		FunctionProxy:        proxy.NewHandlerFunc(config, invokeResolver{}),
 		ListNamespaceHandler: listNamespaces(),
 	}
 
