@@ -4,17 +4,19 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"path"
 	"strings"
 	"syscall"
 	"time"
+
+	"github.com/openfaas/faas-provider/proxy"
 
 	"github.com/containerd/containerd"
 
@@ -112,17 +114,24 @@ func Start() {
 		panic(err)
 	}
 	defer client.Close()
+	config := types.FaaSConfig{
+		MaxIdleConns:        1000,
+		MaxIdleConnsPerHost: 1000,
+		ReadTimeout:         functionUptime,
+		WriteTimeout:        functionUptime,
+	}
 
 	bootstrapHandlers := types.FaaSHandlers{
-		FunctionProxy:  invokeHandler(),
-		DeleteHandler:  deleteHandler(),
-		DeployHandler:  deployHandler(client),
-		FunctionReader: readHandler(),
-		ReplicaReader:  replicaReader(),
-		ReplicaUpdater: func(w http.ResponseWriter, r *http.Request) {},
-		UpdateHandler:  updateHandler(client),
-		HealthHandler:  func(w http.ResponseWriter, r *http.Request) {},
-		InfoHandler:    func(w http.ResponseWriter, r *http.Request) {},
+		FunctionProxy:        proxy.NewHandlerFunc(config, invokeResolver{}),
+		DeleteHandler:        deleteHandler(),
+		DeployHandler:        deployHandler(client),
+		FunctionReader:       readHandler(),
+		ReplicaReader:        replicaReader(),
+		ReplicaUpdater:       func(w http.ResponseWriter, r *http.Request) {},
+		UpdateHandler:        updateHandler(client),
+		HealthHandler:        func(w http.ResponseWriter, r *http.Request) {},
+		InfoHandler:          func(w http.ResponseWriter, r *http.Request) {},
+		ListNamespaceHandler: listNamespaces(),
 	}
 
 	port := 8081
@@ -145,37 +154,60 @@ func Start() {
 	bootstrap.Serve(&bootstrapHandlers, &bootstrapConfig)
 }
 
-func invokeHandler() func(w http.ResponseWriter, r *http.Request) {
+type invokeResolver struct {
+}
+
+func (invokeResolver) Resolve(functionName string) (url.URL, error) {
+	fmt.Println("Resolve: ", functionName)
+	v, ok := serviceMap[functionName]
+	if !ok {
+		return url.URL{}, fmt.Errorf("not found")
+	}
+	fmt.Println(v, functionName)
+
+	urlOut, _ := url.Parse("http://" + v.String() + ":8080")
+	return *urlOut, nil
+}
+
+func listNamespaces() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-
-		vars := mux.Vars(r)
-		name := vars["name"]
-
-		v, ok := serviceMap[name]
-		if !ok {
-			w.WriteHeader(http.StatusNotFound)
-			return
-		}
-		fmt.Println(v, name)
-
-		req, err := http.NewRequest(r.Method, "http://"+v.String()+":8080/", r.Body)
-		if err != nil {
-			log.Println(err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		res, err := http.DefaultClient.Do(req)
-		if err != nil {
-			log.Println(err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		defer res.Body.Close()
-
-		io.Copy(w, res.Body)
+		list := []string{}
+		out, _ := json.Marshal(list)
+		w.Write(out)
 	}
 }
+
+// func invokeHandler() func(w http.ResponseWriter, r *http.Request) {
+// 	return func(w http.ResponseWriter, r *http.Request) {
+
+// 		vars := mux.Vars(r)
+// 		name := vars["name"]
+
+// 		v, ok := serviceMap[name]
+// 		if !ok {
+// 			w.WriteHeader(http.StatusNotFound)
+// 			return
+// 		}
+// 		fmt.Println(v, name)
+
+// 		req, err := http.NewRequest(r.Method, "http://"+v.String()+":8080/", r.Body)
+// 		if err != nil {
+// 			log.Println(err)
+// 			http.Error(w, err.Error(), http.StatusInternalServerError)
+// 			return
+// 		}
+
+// 		res, err := http.DefaultClient.Do(req)
+// 		if err != nil {
+// 			log.Println(err)
+// 			http.Error(w, err.Error(), http.StatusInternalServerError)
+// 			return
+// 		}
+// 		defer res.Body.Close()
+
+// 		io.Copy(w, res.Body)
+// 	}
+// }
 
 func deleteHandler() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {

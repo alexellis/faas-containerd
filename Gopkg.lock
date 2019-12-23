@@ -242,24 +242,18 @@
   revision = "29686dbc5559d93fb1ef402eeda3e35c38d75af4"
 
 [[projects]]
-  digest = "1:cdf3df431e70077f94e14a99305808e3d13e96262b4686154970f448f7248842"
-  name = "github.com/openfaas/faas"
-  packages = ["gateway/requests"]
-  pruneopts = "UT"
-  revision = "59b7839236098820e73ed25301258b722c3d33e4"
-  version = "0.18.7"
-
-[[projects]]
-  digest = "1:b8ded804f19770111bb2f06ae4228d55756b612f6764d38a070c106b917b04c6"
+  digest = "1:c9935ad7b0b7f7c6d48fbfb4ae9abf3ab9bbcf2112dd7c4dbe4e990a81f3be42"
   name = "github.com/openfaas/faas-provider"
   packages = [
     ".",
     "auth",
+    "httputil",
+    "proxy",
     "types",
   ]
   pruneopts = "UT"
-  revision = "98c25c3919da1ca07bb93fad63fd9715b460963f"
-  version = "012.1"
+  revision = "d6579bdcf7c85f4d01f398d65ea0cab37e9633d0"
+  version = "0.13.3"
 
 [[projects]]
   digest = "1:cf31692c14422fa27c83a05292eb5cbe0fb2775972e8f1f8446a71549bd8980b"
@@ -438,13 +432,14 @@
     "github.com/containerd/containerd",
     "github.com/containerd/containerd/cio",
     "github.com/containerd/containerd/containers",
+    "github.com/containerd/containerd/errdefs",
     "github.com/containerd/containerd/namespaces",
     "github.com/containerd/containerd/oci",
     "github.com/gorilla/mux",
     "github.com/opencontainers/runtime-spec/specs-go",
     "github.com/openfaas/faas-provider",
+    "github.com/openfaas/faas-provider/proxy",
     "github.com/openfaas/faas-provider/types",
-    "github.com/openfaas/faas/gateway/requests",
     "github.com/vishvananda/netlink",
     "github.com/vishvananda/netns",
   ]
