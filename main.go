@@ -90,6 +90,7 @@ func Start() {
 	}
 
 	bootstrapHandlers := types.FaaSHandlers{
+		FunctionProxy:        proxy.NewHandlerFunc(config, invokeResolver{}),
 		DeleteHandler:        deleteHandler(),
 		DeployHandler:        deployHandler(client),
 		FunctionReader:       readHandler(),
@@ -98,7 +99,6 @@ func Start() {
 		UpdateHandler:        updateHandler(client),
 		HealthHandler:        func(w http.ResponseWriter, r *http.Request) {},
 		InfoHandler:          func(w http.ResponseWriter, r *http.Request) {},
-		FunctionProxy:        proxy.NewHandlerFunc(config, invokeResolver{}),
 		ListNamespaceHandler: listNamespaces(),
 	}
 
@@ -127,14 +127,23 @@ type invokeResolver struct {
 
 func (invokeResolver) Resolve(functionName string) (url.URL, error) {
 	fmt.Println("Resolve: ", functionName)
-	v, ok := serviceMap[functionName]
+	serviceIP, ok := serviceMap[functionName]
 	if !ok {
 		return url.URL{}, fmt.Errorf("not found")
 	}
-	fmt.Println(v, functionName)
 
-	urlOut, _ := url.Parse("http://" + v.String() + ":8080")
-	return *urlOut, nil
+	fmt.Println(functionName, "=", serviceIP)
+
+	const watchdogPort = 8080
+
+	urlStr := fmt.Sprintf("http://%s:%d", serviceIP, watchdogPort)
+
+	urlRes, err := url.Parse(urlStr)
+	if err != nil {
+		return url.URL{}, err
+	}
+
+	return *urlRes, nil
 }
 
 func listNamespaces() func(w http.ResponseWriter, r *http.Request) {
