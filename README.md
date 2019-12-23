@@ -51,9 +51,9 @@ Goals:
 
 You need a Linux computer, VM, or bare-metal cloud host.
 
-I used Ubuntu 18.04 LTS on [Packet.com using the c1.small.x86](https://www.packet.com/cloud/servers/c1-small/) host. You can use [multipass.run](https://multipass.run) to get an Ubuntu host on any OS - Windows, MacOS, or Linux.
+### Get some build dependencies
 
-* Get some build dependencies
+I used Ubuntu 18.04 LTS on [Packet.com using the c1.small.x86](https://www.packet.com/cloud/servers/c1-small/) host. You can use [multipass.run](https://multipass.run) to get an Ubuntu host on any OS - Windows, MacOS, or Linux.
 
 ```sh
 sudo apt update && \
@@ -61,7 +61,8 @@ sudo apt update && \
   	build-essentials libbtrfs-dev libseccomp-dev
 ```
 
-* Install Go 1.12
+### Install Go
+
 ```sh
 curl -SLsf https://dl.google.com/go/go1.12.14.linux-amd64.tar.gz > go.tgz
 sudo rm -rf /usr/local/go/
@@ -74,7 +75,19 @@ export PATH=$PATH:/usr/local/go/bin/
 go version
 ```
 
-* Clone / build / install  [containerd](https://github.com/containerd/containerd) v1.3.2
+### Get containerd
+
+* Install containerd (or build from source)
+
+```sh
+export VER=1.3.2
+curl -sLSf https://github.com/containerd/containerd/releases/download/v$VER/containerd-$VER.linux-amd64.tar.gz > /tmp/containerd.tar.gz \
+  && sudo tar -xvf /tmp/containerd.tar.gz -C /usr/local/bin/ --strip-components=1
+
+containerd -version
+```
+
+* Or clone / build / install [containerd](https://github.com/containerd/containerd) from source:
 
 ```sh
 export GOPATH=$HOME/go/
@@ -103,13 +116,13 @@ Start containerd in a new terminal:
 sudo containerd &
 ```
 
-Enable forwarding:
+### Enable forwarding:
 
 ```sh
 sudo /sbin/sysctl -w net.ipv4.conf.all.forwarding=1
 ```
 
-Get netns
+### Get netns
 
 ```sh
 export GOPATH=$HOME/go/
@@ -118,7 +131,7 @@ go get -u github.com/genuinetools/netns
 sudo mv $GOPATH/bin/netns /usr/bin/
 ```
 
-Build and run
+### Build and run faas-containerd
 
 ```sh
 export GOPATH=$HOME/go/
