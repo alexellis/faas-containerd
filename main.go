@@ -12,8 +12,6 @@ import (
 	"os"
 	"os/exec"
 	"path"
-	"strings"
-	"syscall"
 	"time"
 
 	"github.com/openfaas/faas-provider/proxy"
@@ -81,6 +79,7 @@ func Start() {
 	if err != nil {
 		panic(err)
 	}
+
 	defer client.Close()
 	config := types.FaaSConfig{
 		MaxIdleConns:        1000,
@@ -154,43 +153,10 @@ func listNamespaces() func(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// func invokeHandler() func(w http.ResponseWriter, r *http.Request) {
-// 	return func(w http.ResponseWriter, r *http.Request) {
-
-// 		vars := mux.Vars(r)
-// 		name := vars["name"]
-
-// 		v, ok := serviceMap[name]
-// 		if !ok {
-// 			w.WriteHeader(http.StatusNotFound)
-// 			return
-// 		}
-// 		fmt.Println(v, name)
-
-// 		req, err := http.NewRequest(r.Method, "http://"+v.String()+":8080/", r.Body)
-// 		if err != nil {
-// 			log.Println(err)
-// 			http.Error(w, err.Error(), http.StatusInternalServerError)
-// 			return
-// 		}
-
-// 		res, err := http.DefaultClient.Do(req)
-// 		if err != nil {
-// 			log.Println(err)
-// 			http.Error(w, err.Error(), http.StatusInternalServerError)
-// 			return
-// 		}
-// 		defer res.Body.Close()
-
-// 		io.Copy(w, res.Body)
-// 	}
-// }
-
 func deleteHandler() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		w.WriteHeader(http.StatusOK)
-
 	}
 }
 
@@ -234,15 +200,6 @@ func readHandler() func(w http.ResponseWriter, r *http.Request) {
 
 func deployHandler(client *containerd.Client) func(w http.ResponseWriter, r *http.Request) {
 	return updateHandler(client)
-	// return func(w http.ResponseWriter, r *http.Request) {
-
-	// 	w.WriteHeader(http.StatusOK)
-
-	// 	defer r.Body.Close()
-
-	// 	body, _ := ioutil.ReadAll(r.Body)
-	// 	fmt.Println(string(body))
-	// }
 }
 
 func updateHandler(client *containerd.Client) func(w http.ResponseWriter, r *http.Request) {
@@ -272,9 +229,8 @@ func updateHandler(client *containerd.Client) func(w http.ResponseWriter, r *htt
 				log.Println(err)
 				return
 			}
-
-			log.Println(image.Name())
-			log.Println(image.Size(ctx))
+			size, _ := image.Size(ctx)
+			log.Printf("Deploy %s size: %d\n", image.Name(), size)
 
 			envs := []string{}
 			fprocessFound := false
@@ -282,12 +238,13 @@ func updateHandler(client *containerd.Client) func(w http.ResponseWriter, r *htt
 			if len(req.EnvProcess) > 0 {
 				fprocessFound = true
 			}
-			for _, env := range req.EnvVars {
-				if strings.HasPrefix("fprocess=", env) {
+
+			for k, v := range req.EnvVars {
+				if k == "fprocess" {
 					fprocessFound = true
-					fprocess = env
+					fprocess = v
 				} else {
-					envs = append(envs, env)
+					envs = append(envs, k+"="+v)
 				}
 			}
 			if fprocessFound {
@@ -403,21 +360,18 @@ func updateHandler(client *containerd.Client) func(w http.ResponseWriter, r *htt
 				return
 			}
 
-			log.Println(exitStatusC)
-
 			if err := task.Start(ctx); err != nil {
 				log.Println("Error starting task", err)
 				return
 			}
 
-			// sleep for a bit to see the logs
-			time.Sleep(functionUptime)
-
-			// kill the process and get the exit status
-			if err := task.Kill(ctx, syscall.SIGTERM); err != nil {
-				log.Println(err)
-				return
+			log.Printf("Waiting for task to exit")
+			exitStatus := <-exitStatusC
+			exitErr := "n/a"
+			if exitStatus.Error() != nil {
+				exitErr = exitStatus.Error().Error()
 			}
+			fmt.Printf("%s exitStatus: %d, error: %s\n", req.Service, exitStatus.ExitCode(), exitErr)
 
 		}()
 
