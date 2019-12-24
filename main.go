@@ -30,7 +30,7 @@ import (
 )
 
 var serviceMap map[string]*net.IP
-var functionUptime time.Duration
+var serviceTimeout time.Duration
 
 var (
 	Version   string
@@ -43,7 +43,14 @@ func main() {
 
 // Start faas-containerd
 func Start() {
-	log.Printf("faas-containerd starting..\tVersion: %s\tCommit: %s\n", Version, GitCommit)
+	serviceTimeout = time.Second * 60 * 1
+
+	if val, ok := os.LookupEnv("service_timeout"); ok {
+		timeVal, _ := time.ParseDuration(val)
+		serviceTimeout = timeVal
+	}
+
+	log.Printf("faas-containerd starting..\tVersion: %s\tCommit: %s\tService Timeout: %s\n", Version, GitCommit, serviceTimeout.String())
 
 	sock := os.Getenv("sock")
 	if len(sock) == 0 {
@@ -66,13 +73,6 @@ func Start() {
 		log.Fatalln(fmt.Errorf("cannot write resolv.conf file: %s", writeResolvErr).Error())
 	}
 
-	functionUptime = time.Second * 60 * 5
-
-	if val, ok := os.LookupEnv("function_uptime"); ok {
-		uptime, _ := time.ParseDuration(val)
-		functionUptime = uptime
-	}
-
 	serviceMap = make(map[string]*net.IP)
 
 	client, err := containerd.New(sock)
@@ -84,8 +84,8 @@ func Start() {
 	config := types.FaaSConfig{
 		MaxIdleConns:        1000,
 		MaxIdleConnsPerHost: 1000,
-		ReadTimeout:         functionUptime,
-		WriteTimeout:        functionUptime,
+		ReadTimeout:         serviceTimeout,
+		WriteTimeout:        serviceTimeout,
 	}
 
 	bootstrapHandlers := types.FaaSHandlers{
@@ -103,20 +103,15 @@ func Start() {
 
 	port := 8081
 
-	timeout := time.Minute * 120
-
 	bootstrapConfig := types.FaaSConfig{
-		ReadTimeout:     timeout,
-		WriteTimeout:    timeout,
+		ReadTimeout:     serviceTimeout,
+		WriteTimeout:    serviceTimeout,
 		TCPPort:         &port,
 		EnableBasicAuth: false,
 		EnableHealth:    true,
 	}
 
-	log.Printf("TCP port: %d\tTimeout: %s\tFunction uptime: %s\n",
-		port,
-		timeout.String(),
-		functionUptime.String())
+	log.Printf("TCP port: %d\n", port)
 
 	bootstrap.Serve(&bootstrapHandlers, &bootstrapConfig)
 }
