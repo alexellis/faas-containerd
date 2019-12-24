@@ -158,17 +158,17 @@ sudo /sbin/sysctl -w net.ipv4.conf.all.forwarding=1
 
 	```sh
 	# For x86_64
-	sudo curl -fSLs "https://github.com/alexellis/faas-containerd/releases/download/0.1.0/faas-containerd" \
+	sudo curl -fSLs "https://github.com/alexellis/faas-containerd/releases/download/0.3.0/faas-containerd" \
 	  -o "/usr/local/bin/faas-containerd" \
 	  && sudo chmod a+x "/usr/local/bin/faas-containerd"
 
 	# armhf
-	sudo curl -fSLs "https://github.com/alexellis/faas-containerd/releases/download/0.1.0/faas-containerd-armhf" \
+	sudo curl -fSLs "https://github.com/alexellis/faas-containerd/releases/download/0.3.0/faas-containerd-armhf" \
 	  -o "/usr/local/bin/faas-containerd" \
 	  && sudo chmod a+x "/usr/local/bin/faas-containerd"
 
 	# arm64
-	sudo curl -fSLs "https://github.com/alexellis/faas-containerd/releases/download/0.1.0/faas-containerd-arm64" \
+	sudo curl -fSLs "https://github.com/alexellis/faas-containerd/releases/download/0.3.0/faas-containerd-arm64" \
 	  -o "/usr/local/bin/faas-containerd" \
 	  && sudo chmod a+x "/usr/local/bin/faas-containerd"
 	```
@@ -183,7 +183,7 @@ sudo /sbin/sysctl -w net.ipv4.conf.all.forwarding=1
 	git clone https://github.com/alexellis/faas-containerd
 	cd faas-containerd
 
-	go build && sudo function_uptime=120m ./faas-containerd
+	go build && sudo service_timeout=1m ./faas-containerd
 	```
 
 > Listens on port TCP/8081
