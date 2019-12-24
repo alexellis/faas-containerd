@@ -183,7 +183,8 @@ func readHandler() func(w http.ResponseWriter, r *http.Request) {
 		res := []types.FunctionStatus{}
 		for k := range serviceMap {
 			res = append(res, types.FunctionStatus{
-				Name: k,
+				Name:     k,
+				Replicas: 1,
 			})
 		}
 		body, _ := json.Marshal(res)
