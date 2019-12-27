@@ -57,11 +57,14 @@ I used Ubuntu 18.04 LTS on [Packet.com using the c1.small.x86](https://www.packe
 
 ```sh
 sudo apt update && \
-  sudo apt install -qy runc bridge-utils ethtool tmux git \
-  	build-essentials libbtrfs-dev libseccomp-dev
+  sudo apt install -qy runc \
+  	bridge-utils \
+	tmux git \
+  	build-essential \
+	libbtrfs-dev libseccomp-dev
 ```
 
-### Install Go
+### Install Go 1.12 (x86_64)
 
 ```sh
 curl -SLsf https://dl.google.com/go/go1.12.14.linux-amd64.tar.gz > go.tgz
@@ -75,9 +78,25 @@ export PATH=$PATH:/usr/local/go/bin/
 go version
 ```
 
+### Or on Raspberry Pi (armhf)
+
+```sh
+curl -SLsf https://dl.google.com/go/go1.12.14.linux-armv6l.tar.gz > go.tgz
+sudo rm -rf /usr/local/go/
+sudo mkdir -p /usr/local/go/
+sudo tar -xvf go.tgz -C /usr/local/go/ --strip-components=1
+
+export GOPATH=$HOME/go/
+export PATH=$PATH:/usr/local/go/bin/
+
+go version
+```
+
 ### Get containerd
 
 * Install containerd (or build from source)
+
+> Note: This can only be run on x86_64
 
 ```sh
 export VER=1.3.2
@@ -100,6 +119,8 @@ git checkout v1.3.2
 
 make
 sudo make install
+
+containerd --version
 ```
 
 Kill any old containerd version:
@@ -118,8 +139,16 @@ sudo containerd &
 
 ### Enable forwarding:
 
+> This is required to allow containers in containerd to access the Internet via your computer's primary network interface.
+
 ```sh
 sudo /sbin/sysctl -w net.ipv4.conf.all.forwarding=1
+```
+
+Make the setting permanent:
+
+```
+echo "net.ipv4.conf.all.forwarding=1" | sudo tee -a /etc/sysctl.conf
 ```
 
 ### Get netns
@@ -173,7 +202,7 @@ sudo /sbin/sysctl -w net.ipv4.conf.all.forwarding=1
 	  && sudo chmod a+x "/usr/local/bin/faas-containerd"
 	```
 
-* Build from source
+* Or build from source
 
 	```sh
 	export GOPATH=$HOME/go/
@@ -248,38 +277,6 @@ sudo ctr --namespace openfaas-fn task kill figlet
 sudo ctr --namespace openfaas-fn task delete figlet
 sudo ctr --namespace openfaas-fn container delete figlet
 sudo ctr --namespace openfaas-fn snapshot remove figlet-snapshot
-```
-
-### Appendix
-
-Deploy a container without a server
-
-```sh
-faas deploy --name uptime --image alexellis2/uptime:latest \
-  -g 127.0.0.1:8081 --update=true --replace=false
-```
-
-Create [networking configuration for CNI](https://github.com/containernetworking/cni/tree/master/cnitool)
-
-```sh
-$ mkdir -p /etc/cni/net.d
-$ cat >/etc/cni/net.d/10-mynet.conf <<EOF
-{
-	"cniVersion": "0.2.0",
-	"name": "mynet",
-	"type": "bridge",
-	"bridge": "cni0",
-	"isGateway": true,
-	"ipMasq": true,
-	"ipam": {
-		"type": "host-local",
-		"subnet": "10.22.0.0/16",
-		"routes": [
-			{ "dst": "0.0.0.0/0" }
-		]
-	}
-}
-EOF
 ```
 
 ## Links
