@@ -98,7 +98,7 @@ func deploy(ctx context.Context, req types.FunctionDeployment, client *container
 			oci.WithEnv(envs),
 			hook),
 	)
-	fmt.Println(container, err)
+
 	if err != nil {
 		return fmt.Errorf("unable to create container: %s, error: %s", name, err)
 	}
