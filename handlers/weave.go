@@ -1,7 +1,7 @@
 // Copyright Weaveworks
 // github.com/weaveworks/weave/net
 
-package main
+package handlers
 
 import (
 	"fmt"

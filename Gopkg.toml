@@ -11,6 +11,10 @@
   version = "0.18.7"
 
 [[constraint]]
+  name = "github.com/alexellis/faasd"
+  version = "0.2.7"
+
+[[constraint]]
   name = "github.com/openfaas/faas-provider"
   version = "0.13.3"
 
