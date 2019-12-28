@@ -38,6 +38,14 @@
   revision = "9e921883ac929bbe515b39793ece99ce3a9d7706"
 
 [[projects]]
+  digest = "1:30cfa8c38c4b1ada087070fcfa0a878b10b1521c728e2954369c3944e3c9ac4b"
+  name = "github.com/alexellis/faasd"
+  packages = ["pkg/service"]
+  pruneopts = "UT"
+  revision = "6c3fe813fda8bbcfb2109e9a73361e7e485e36a6"
+  version = "0.2.7"
+
+[[projects]]
   digest = "1:386ca0ac781cc1b630b3ed21725759770174140164b3faf3810e6ed6366a970b"
   name = "github.com/containerd/containerd"
   packages = [
@@ -429,10 +437,10 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/alexellis/faasd/pkg/service",
     "github.com/containerd/containerd",
     "github.com/containerd/containerd/cio",
     "github.com/containerd/containerd/containers",
-    "github.com/containerd/containerd/errdefs",
     "github.com/containerd/containerd/namespaces",
     "github.com/containerd/containerd/oci",
     "github.com/gorilla/mux",
@@ -440,6 +448,7 @@
     "github.com/openfaas/faas-provider",
     "github.com/openfaas/faas-provider/proxy",
     "github.com/openfaas/faas-provider/types",
+    "github.com/pkg/errors",
     "github.com/vishvananda/netlink",
     "github.com/vishvananda/netns",
   ]
