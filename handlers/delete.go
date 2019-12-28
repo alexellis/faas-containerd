@@ -26,7 +26,7 @@ func MakeDeleteHandler(client *containerd.Client, serviceMap *ServiceMap) func(w
 		defer r.Body.Close()
 
 		body, _ := ioutil.ReadAll(r.Body)
-		fmt.Printf("Deployment request:\n%s", string(body))
+		fmt.Printf("Deployment request: %s\n", string(body))
 
 		req := types.FunctionDeployment{}
 		err := json.Unmarshal(body, &req)
