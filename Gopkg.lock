@@ -38,12 +38,12 @@
   revision = "9e921883ac929bbe515b39793ece99ce3a9d7706"
 
 [[projects]]
-  digest = "1:30cfa8c38c4b1ada087070fcfa0a878b10b1521c728e2954369c3944e3c9ac4b"
+  digest = "1:2ea7c50ec71417e3db87667c758b976d15536e347f198775b130ad41f97bccb4"
   name = "github.com/alexellis/faasd"
   packages = ["pkg/service"]
   pruneopts = "UT"
-  revision = "6c3fe813fda8bbcfb2109e9a73361e7e485e36a6"
-  version = "0.2.7"
+  revision = "38f26b213f15453f80ff15439cd166d1cc1ad16e"
+  version = "0.2.8"
 
 [[projects]]
   digest = "1:386ca0ac781cc1b630b3ed21725759770174140164b3faf3810e6ed6366a970b"
