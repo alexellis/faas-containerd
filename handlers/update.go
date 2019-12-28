@@ -26,7 +26,7 @@ func MakeUpdateHandler(client *containerd.Client, serviceMap *ServiceMap) func(w
 		defer r.Body.Close()
 
 		body, _ := ioutil.ReadAll(r.Body)
-		fmt.Printf("[Update] request: %s\n", string(body))
+		log.Printf("[Update] request: %s\n", string(body))
 
 		req := types.FunctionDeployment{}
 		err := json.Unmarshal(body, &req)
