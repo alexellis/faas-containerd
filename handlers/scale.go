@@ -25,7 +25,7 @@ func MakeReplicaUpdateHandler(client *containerd.Client, serviceMap *ServiceMap)
 		defer r.Body.Close()
 
 		body, _ := ioutil.ReadAll(r.Body)
-		fmt.Printf("Scale request: %s\n", string(body))
+		fmt.Printf("[Scale] request: %s\n", string(body))
 
 		req := types.ScaleServiceRequest{}
 		err := json.Unmarshal(body, &req)
@@ -62,11 +62,18 @@ func MakeReplicaUpdateHandler(client *containerd.Client, serviceMap *ServiceMap)
 			http.Error(w, msg, http.StatusNotFound)
 			return
 		}
-
+		var scaleErr error
 		if req.Replicas == 0 {
-			task.Pause(ctx)
+			scaleErr = task.Pause(ctx)
 		} else if req.Replicas == 1 {
-			task.Resume(ctx)
+			scaleErr = task.Resume(ctx)
+		}
+
+		if scaleErr != nil {
+			msg := fmt.Sprintf("cannot scale task for %s, error: %s", name, scaleErr)
+			log.Printf("[Scale] %s\n", msg)
+			http.Error(w, msg, http.StatusInternalServerError)
+			return
 		}
 	}
 

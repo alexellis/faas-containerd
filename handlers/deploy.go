@@ -41,7 +41,7 @@ func MakeDeployHandler(client *containerd.Client, serviceMap *ServiceMap) func(w
 		req := types.FunctionDeployment{}
 		err := json.Unmarshal(body, &req)
 		if err != nil {
-			log.Printf("Update handler - error parsing input: %s\n", err)
+			log.Printf("[Deploy] - error parsing input: %s\n", err)
 			http.Error(w, err.Error(), http.StatusBadRequest)
 
 			return
