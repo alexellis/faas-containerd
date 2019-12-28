@@ -25,7 +25,7 @@ func MakeReplicaUpdateHandler(client *containerd.Client, serviceMap *ServiceMap)
 		defer r.Body.Close()
 
 		body, _ := ioutil.ReadAll(r.Body)
-		fmt.Printf("[Scale] request: %s\n", string(body))
+		log.Printf("[Scale] request: %s\n", string(body))
 
 		req := types.ScaleServiceRequest{}
 		err := json.Unmarshal(body, &req)

@@ -36,7 +36,7 @@ func MakeDeployHandler(client *containerd.Client, serviceMap *ServiceMap) func(w
 		defer r.Body.Close()
 
 		body, _ := ioutil.ReadAll(r.Body)
-		fmt.Printf("[Deploy] request: %s\n", string(body))
+		log.Printf("[Deploy] request: %s\n", string(body))
 
 		req := types.FunctionDeployment{}
 		err := json.Unmarshal(body, &req)
@@ -118,7 +118,7 @@ func deploy(ctx context.Context, req types.FunctionDeployment, client *container
 
 	serviceMap.Add(name, ip)
 
-	fmt.Printf("%s has IP: %s\n", name, ip.String())
+	log.Printf("%s has IP: %s\n", name, ip.String())
 
 	_, waitErr := task.Wait(ctx)
 	if waitErr != nil {

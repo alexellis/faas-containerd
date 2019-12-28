@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"log"
 	"net/url"
 )
 
@@ -16,7 +17,7 @@ func NewInvokeResolver(serviceMap *ServiceMap) *InvokeResolver {
 }
 
 func (i *InvokeResolver) Resolve(functionName string) (url.URL, error) {
-	fmt.Printf("Resolve: %q\n", functionName)
+	log.Printf("Resolve: %q\n", functionName)
 
 	serviceIP := i.serviceMap.Get(functionName)
 	if serviceIP == nil {
