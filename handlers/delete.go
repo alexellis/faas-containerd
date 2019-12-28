@@ -11,7 +11,7 @@ import (
 	"github.com/alexellis/faasd/pkg/service"
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/namespaces"
-	"github.com/openfaas/faas-provider/types"
+	"github.com/openfaas/faas/gateway/requests"
 )
 
 func MakeDeleteHandler(client *containerd.Client, serviceMap *ServiceMap) func(w http.ResponseWriter, r *http.Request) {
@@ -28,7 +28,7 @@ func MakeDeleteHandler(client *containerd.Client, serviceMap *ServiceMap) func(w
 		body, _ := ioutil.ReadAll(r.Body)
 		log.Printf("[Delete] request: %s\n", string(body))
 
-		req := types.FunctionDeployment{}
+		req := requests.DeleteFunctionRequest{}
 		err := json.Unmarshal(body, &req)
 		if err != nil {
 			log.Printf("[Delete] error parsing input: %s\n", err)
@@ -36,7 +36,8 @@ func MakeDeleteHandler(client *containerd.Client, serviceMap *ServiceMap) func(w
 
 			return
 		}
-		name := req.Service
+
+		name := req.FunctionName
 
 		if addr := serviceMap.Get(name); addr == nil {
 			msg := fmt.Sprintf("service %s not found", name)
@@ -55,5 +56,6 @@ func MakeDeleteHandler(client *containerd.Client, serviceMap *ServiceMap) func(w
 		}
 
 		serviceMap.Delete(name)
+		log.Printf("[Delete] deleted %s\n", name)
 	}
 }

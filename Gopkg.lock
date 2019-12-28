@@ -250,6 +250,14 @@
   revision = "29686dbc5559d93fb1ef402eeda3e35c38d75af4"
 
 [[projects]]
+  digest = "1:cdf3df431e70077f94e14a99305808e3d13e96262b4686154970f448f7248842"
+  name = "github.com/openfaas/faas"
+  packages = ["gateway/requests"]
+  pruneopts = "UT"
+  revision = "80b6976c106370a7081b2f8e9099a6ea9638e1f3"
+  version = "0.18.10"
+
+[[projects]]
   digest = "1:c9935ad7b0b7f7c6d48fbfb4ae9abf3ab9bbcf2112dd7c4dbe4e990a81f3be42"
   name = "github.com/openfaas/faas-provider"
   packages = [
@@ -448,6 +456,7 @@
     "github.com/openfaas/faas-provider",
     "github.com/openfaas/faas-provider/proxy",
     "github.com/openfaas/faas-provider/types",
+    "github.com/openfaas/faas/gateway/requests",
     "github.com/pkg/errors",
     "github.com/vishvananda/netlink",
     "github.com/vishvananda/netns",
