@@ -85,7 +85,7 @@ func Start() {
 		DeployHandler:        handlers.MakeDeployHandler(client, serviceMap),
 		FunctionReader:       handlers.MakeReadHandler(client, serviceMap),
 		ReplicaReader:        handlers.MakeReplicaReaderHandler(client, serviceMap),
-		ReplicaUpdater:       func(w http.ResponseWriter, r *http.Request) {},
+		ReplicaUpdater:       handlers.MakeReplicaUpdateHandler(client, serviceMap),
 		UpdateHandler:        handlers.MakeUpdateHandler(client, serviceMap),
 		HealthHandler:        func(w http.ResponseWriter, r *http.Request) {},
 		InfoHandler:          func(w http.ResponseWriter, r *http.Request) {},
