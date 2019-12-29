@@ -20,6 +20,7 @@ func MakeReplicaReaderHandler(client *containerd.Client, serviceMap *ServiceMap)
 				Name:              functionName,
 				AvailableReplicas: 1,
 				Replicas:          1,
+				// Namespace:         "openfaas-fn",
 			}
 
 			functionBytes, _ := json.Marshal(found)

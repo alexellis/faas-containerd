@@ -109,7 +109,7 @@ func Start() {
 
 func listNamespaces() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		list := []string{"openfaas-fn"}
+		list := []string{""}
 		out, _ := json.Marshal(list)
 		w.Write(out)
 	}

@@ -17,6 +17,7 @@ func MakeReadHandler(client *containerd.Client, serviceMap *ServiceMap) func(w h
 			res = append(res, types.FunctionStatus{
 				Name:     k,
 				Replicas: 1,
+				// Namespace: "openfaas-fn",
 			})
 		}
 
