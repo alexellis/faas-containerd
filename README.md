@@ -12,10 +12,10 @@ Pros:
 * Fast cold-start
 * containerd features available such as pause/snapshot
 * Super lightweight
+* Basic service-discovery and inter-service communication through /etc/hosts and bridge
 
 Cons:
 * No clustering (yet)
-* No inter-service communication (yet)
 
 ## Status
 
@@ -187,17 +187,17 @@ echo "net.ipv4.conf.all.forwarding=1" | sudo tee -a /etc/sysctl.conf
 
 	```sh
 	# For x86_64
-	sudo curl -fSLs "https://github.com/alexellis/faas-containerd/releases/download/0.3.2/faas-containerd" \
+	sudo curl -fSLs "https://github.com/alexellis/faas-containerd/releases/download/0.3.3/faas-containerd" \
 	  -o "/usr/local/bin/faas-containerd" \
 	  && sudo chmod a+x "/usr/local/bin/faas-containerd"
 
 	# armhf
-	sudo curl -fSLs "https://github.com/alexellis/faas-containerd/releases/download/0.3.2/faas-containerd-armhf" \
+	sudo curl -fSLs "https://github.com/alexellis/faas-containerd/releases/download/0.3.3/faas-containerd-armhf" \
 	  -o "/usr/local/bin/faas-containerd" \
 	  && sudo chmod a+x "/usr/local/bin/faas-containerd"
 
 	# arm64
-	sudo curl -fSLs "https://github.com/alexellis/faas-containerd/releases/download/0.3.2/faas-containerd-arm64" \
+	sudo curl -fSLs "https://github.com/alexellis/faas-containerd/releases/download/0.3.3/faas-containerd-arm64" \
 	  -o "/usr/local/bin/faas-containerd" \
 	  && sudo chmod a+x "/usr/local/bin/faas-containerd"
 	```
