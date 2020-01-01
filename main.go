@@ -8,7 +8,8 @@ import (
 	"net/http"
 	"os"
 	"path"
-	"time"
+
+	"github.com/alexellis/faas-containerd/config"
 
 	"github.com/alexellis/faas-containerd/handlers"
 	"github.com/openfaas/faas-provider/proxy"
@@ -18,8 +19,6 @@ import (
 	bootstrap "github.com/openfaas/faas-provider"
 	"github.com/openfaas/faas-provider/types"
 )
-
-var serviceTimeout time.Duration
 
 var (
 	Version   string
@@ -32,21 +31,17 @@ func main() {
 
 // Start faas-containerd
 func Start() {
-	serviceTimeout = time.Second * 60 * 1
 
-	if val, ok := os.LookupEnv("service_timeout"); ok {
-		timeVal, _ := time.ParseDuration(val)
-		serviceTimeout = timeVal
+	config, providerConfig, err := config.ReadFromEnv(types.OsEnv{})
+	if err != nil {
+		panic(err)
 	}
+	log.Printf("faas-containerd starting..\tVersion: %s\tCommit: %s\tService Timeout: %s\n", Version, GitCommit, config.WriteTimeout.String())
 
-	log.Printf("faas-containerd starting..\tVersion: %s\tCommit: %s\tService Timeout: %s\n", Version, GitCommit, serviceTimeout.String())
-
-	sock := os.Getenv("sock")
-	if len(sock) == 0 {
-		sock = "/run/containerd/containerd.sock"
+	wd, err := os.Getwd()
+	if err != nil {
+		panic(err)
 	}
-
-	wd, _ := os.Getwd()
 
 	writeHostsErr := ioutil.WriteFile(path.Join(wd, "hosts"),
 		[]byte(`127.0.0.1	localhost`), 0644)
@@ -64,22 +59,12 @@ func Start() {
 
 	serviceMap := handlers.NewServiceMap()
 
-	client, err := containerd.New(sock)
+	client, err := containerd.New(providerConfig.Sock)
 	if err != nil {
 		panic(err)
 	}
 
 	defer client.Close()
-
-	config, err := types.ReadConfig{}.Read(types.OsEnv{})
-	if err != nil {
-		panic(err)
-	}
-	port := 8081
-	config.ReadTimeout = serviceTimeout
-	config.WriteTimeout = serviceTimeout
-	config.EnableHealth = true
-	config.TCPPort = &port
 
 	invokeResolver := handlers.NewInvokeResolver(serviceMap)
 
@@ -96,8 +81,7 @@ func Start() {
 		ListNamespaceHandler: listNamespaces(),
 	}
 
-	log.Printf("TCP port: %d\n", port)
-
+	log.Printf("TCP port: %d\n", *config.TCPPort)
 	bootstrap.Serve(&bootstrapHandlers, config)
 }
 
