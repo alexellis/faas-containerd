@@ -70,17 +70,21 @@ func Start() {
 	}
 
 	defer client.Close()
-	config := types.FaaSConfig{
-		MaxIdleConns:        1000,
-		MaxIdleConnsPerHost: 1000,
-		ReadTimeout:         serviceTimeout,
-		WriteTimeout:        serviceTimeout,
+
+	config, err := types.ReadConfig{}.Read(types.OsEnv{})
+	if err != nil {
+		panic(err)
 	}
+	port := 8081
+	config.ReadTimeout = serviceTimeout
+	config.WriteTimeout = serviceTimeout
+	config.EnableHealth = true
+	config.TCPPort = &port
 
 	invokeResolver := handlers.NewInvokeResolver(serviceMap)
 
 	bootstrapHandlers := types.FaaSHandlers{
-		FunctionProxy:        proxy.NewHandlerFunc(config, invokeResolver),
+		FunctionProxy:        proxy.NewHandlerFunc(*config, invokeResolver),
 		DeleteHandler:        handlers.MakeDeleteHandler(client, serviceMap),
 		DeployHandler:        handlers.MakeDeployHandler(client, serviceMap),
 		FunctionReader:       handlers.MakeReadHandler(client, serviceMap),
@@ -92,19 +96,9 @@ func Start() {
 		ListNamespaceHandler: listNamespaces(),
 	}
 
-	port := 8081
-
-	bootstrapConfig := types.FaaSConfig{
-		ReadTimeout:     serviceTimeout,
-		WriteTimeout:    serviceTimeout,
-		TCPPort:         &port,
-		EnableBasicAuth: false,
-		EnableHealth:    true,
-	}
-
 	log.Printf("TCP port: %d\n", port)
 
-	bootstrap.Serve(&bootstrapHandlers, &bootstrapConfig)
+	bootstrap.Serve(&bootstrapHandlers, config)
 }
 
 func listNamespaces() func(w http.ResponseWriter, r *http.Request) {
