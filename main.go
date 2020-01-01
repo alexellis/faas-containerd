@@ -88,7 +88,7 @@ func Start() {
 		ReplicaUpdater:       handlers.MakeReplicaUpdateHandler(client, serviceMap),
 		UpdateHandler:        handlers.MakeUpdateHandler(client, serviceMap),
 		HealthHandler:        func(w http.ResponseWriter, r *http.Request) {},
-		InfoHandler:          func(w http.ResponseWriter, r *http.Request) {},
+		InfoHandler:          handlers.MakeInfoHandler(Version, GitCommit),
 		ListNamespaceHandler: listNamespaces(),
 	}
 
