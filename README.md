@@ -200,6 +200,8 @@ echo "net.ipv4.conf.all.forwarding=1" | sudo tee -a /etc/sysctl.conf
 	sudo curl -fSLs "https://github.com/alexellis/faas-containerd/releases/download/0.3.3/faas-containerd-arm64" \
 	  -o "/usr/local/bin/faas-containerd" \
 	  && sudo chmod a+x "/usr/local/bin/faas-containerd"
+	  
+	  sudo service_timeout=1m ./faas-containerd
 	```
 
 * Or build from source
@@ -267,7 +269,7 @@ echo "verbose" | faas-cli invoke nodeinfo -g 127.0.0.1:8081
 List containers with `ctr`:
 
 ```sh
-sudo ctr --namespace openfaas-fn list
+sudo ctr --namespace openfaas-fn container list
 ```
 
 Delete container, snapshot and task:
