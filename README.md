@@ -187,17 +187,17 @@ echo "net.ipv4.conf.all.forwarding=1" | sudo tee -a /etc/sysctl.conf
 
 	```sh
 	# For x86_64
-	sudo curl -fSLs "https://github.com/alexellis/faas-containerd/releases/download/0.3.3/faas-containerd" \
+	sudo curl -fSLs "https://github.com/alexellis/faas-containerd/releases/download/0.4.0/faas-containerd" \
 	  -o "/usr/local/bin/faas-containerd" \
 	  && sudo chmod a+x "/usr/local/bin/faas-containerd"
 
 	# armhf
-	sudo curl -fSLs "https://github.com/alexellis/faas-containerd/releases/download/0.3.3/faas-containerd-armhf" \
+	sudo curl -fSLs "https://github.com/alexellis/faas-containerd/releases/download/0.4.0/faas-containerd-armhf" \
 	  -o "/usr/local/bin/faas-containerd" \
 	  && sudo chmod a+x "/usr/local/bin/faas-containerd"
 
 	# arm64
-	sudo curl -fSLs "https://github.com/alexellis/faas-containerd/releases/download/0.3.3/faas-containerd-arm64" \
+	sudo curl -fSLs "https://github.com/alexellis/faas-containerd/releases/download/0.4.0/faas-containerd-arm64" \
 	  -o "/usr/local/bin/faas-containerd" \
 	  && sudo chmod a+x "/usr/local/bin/faas-containerd"
 	```
