@@ -200,7 +200,7 @@ echo "net.ipv4.conf.all.forwarding=1" | sudo tee -a /etc/sysctl.conf
 	sudo curl -fSLs "https://github.com/alexellis/faas-containerd/releases/download/0.4.0/faas-containerd-arm64" \
 	  -o "/usr/local/bin/faas-containerd" \
 	  && sudo chmod a+x "/usr/local/bin/faas-containerd"
-	
+
 	# run faas-containerd
 	sudo service_timeout=1m ./faas-containerd
 	```
@@ -281,6 +281,45 @@ sudo ctr --namespace openfaas-fn task delete figlet
 sudo ctr --namespace openfaas-fn container delete figlet
 sudo ctr --namespace openfaas-fn snapshot remove figlet-snapshot
 ```
+
+## Enable Basic Auth
+Basic auth requires three things: a username file, a password file, and an env variable.
+
+First, create the username and password, make sure to pick a secure password for production deployments:
+```sh
+echo admin >> basic-auth-user
+echo localdev >> basic-auth-password
+```
+
+Then set the `basic_auth` and `secret_mount_path` env variables when starting `faas-containerd`:
+```sh
+service_timeout=1m basic_auth=true secret_mount_path=`pwd` sudo ./bin/faas-containerd
+```
+
+The default value for `secret_mount_path` is `/run/secrets/`.
+
+Once it is running, you can quickly verify that auth is being enforced by using the CLI:
+
+```sh
+$ faas-cli list -g 127.0.0.1:8081
+Unauthorized access, run "faas-cli login" to setup authentication for this server
+```
+
+Now login:
+
+```sh
+cat basic-auth-password | faas-cli login -g 127.0.0.1:8081 --tls-no-verify -u admin --password-stdin
+```
+
+You can now deploy and invoke a function as before:
+```sh
+faas-cli deploy --image alexellis2/ping:0.1 \
+  -g 127.0.0.1:8081 --update=true --replace=false --name ping
+echo "-c 1 8.8.8.8" | faas-cli invoke ping -g 127.0.0.1:8081
+```
+
+The auth is saved in `~/.openfaas/config.yml`.
+
 
 ## Links
 
