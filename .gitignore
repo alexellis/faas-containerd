@@ -4,3 +4,5 @@ go*.gz
 /resolv.conf
 /hosts
 /bin
+basic-auth-password
+basic-auth-user
