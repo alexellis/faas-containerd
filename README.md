@@ -137,7 +137,18 @@ Start containerd in a new terminal:
 sudo containerd &
 ```
 
-### Enable forwarding:
+### CNI Plugins
+
+Install the CNI plugins like this:
+
+```sh
+export CNI_VERSION=v0.8.2
+export ARCH=$([ $(uname -m) = "x86_64" ] && echo amd64 || echo arm64)
+mkdir -p /opt/cni/bin
+curl -sSL https://github.com/containernetworking/plugins/releases/download/${CNI_VERSION}/cni-plugins-linux-${ARCH}-${CNI_VERSION}.tgz | tar -xz -C /opt/cni/bin
+```
+
+### Enable forwarding
 
 > This is required to allow containers in containerd to access the Internet via your computer's primary network interface.
 
@@ -147,39 +158,9 @@ sudo /sbin/sysctl -w net.ipv4.conf.all.forwarding=1
 
 Make the setting permanent:
 
-```
+```sh
 echo "net.ipv4.conf.all.forwarding=1" | sudo tee -a /etc/sysctl.conf
 ```
-
-### Get netns
-
-* From binaries:
-
-	```sh
-	# For x86_64
-	sudo curl -fSLs "https://github.com/genuinetools/netns/releases/download/v0.5.3/netns-linux-amd64" \
-	  -o "/usr/local/bin/netns" \
-	  && sudo chmod a+x "/usr/local/bin/netns"
-
-	# armhf
-	sudo curl -fSLs "https://github.com/genuinetools/netns/releases/download/v0.5.3/netns-linux-arm" \
-	  -o "/usr/local/bin/netns" \
-	  && sudo chmod a+x "/usr/local/bin/netns"
-
-	# arm64
-	sudo curl -fSLs "https://github.com/genuinetools/netns/releases/download/v0.5.3/netns-linux-arm64" \
-	  -o "/usr/local/bin/netns" \
-	  && sudo chmod a+x "/usr/local/bin/netns"
-	```
-
-* Or build from source:
-
-	```sh
-	export GOPATH=$HOME/go/
-
-	go get -u github.com/genuinetools/netns
-	sudo mv $GOPATH/bin/netns /usr/bin/
-	```
 
 ### Build and run faas-containerd
 
@@ -283,6 +264,7 @@ sudo ctr --namespace openfaas-fn snapshot remove figlet-snapshot
 ```
 
 ## Enable Basic Auth
+
 Basic auth requires three things: a username file, a password file, and an env variable.
 
 First, create the username and password, make sure to pick a secure password for production deployments:

@@ -123,6 +123,14 @@
   revision = "bda0ff6ed73c67bfb5e62bc9c697f146b7fd7f13"
 
 [[projects]]
+  branch = "master"
+  digest = "1:8b49f16f34656a09ef6f87c557d7947f331b41a943e68a593245a80b4fd416f3"
+  name = "github.com/containerd/go-cni"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "60d125212fafdfd9da805c967b9f547b5fa39c5c"
+
+[[projects]]
   digest = "1:6d66a41dbbc6819902f1589d0550bc01c18032c0a598a7cd656731e6df73861b"
   name = "github.com/containerd/ttrpc"
   packages = ["."]
@@ -135,6 +143,21 @@
   packages = ["."]
   pruneopts = "UT"
   revision = "a93fcdb778cd272c6e9b3028b2f42d813e785d40"
+
+[[projects]]
+  digest = "1:1a07bbfee1d0534e8dda4773948e6dcd3a061ea7ab047ce04619476946226483"
+  name = "github.com/containernetworking/cni"
+  packages = [
+    "libcni",
+    "pkg/invoke",
+    "pkg/types",
+    "pkg/types/020",
+    "pkg/types/current",
+    "pkg/version",
+  ]
+  pruneopts = "UT"
+  revision = "4cfb7b568922a3c79a23e438dc52fe537fc9687e"
+  version = "v0.7.1"
 
 [[projects]]
   digest = "1:e495f9f1fb2bae55daeb76e099292054fe1f734947274b3cfc403ccda595d55a"
@@ -195,6 +218,14 @@
   pruneopts = "UT"
   revision = "6c65a5562fc06764971b7c5d05c76c75e84bdbf7"
   version = "v1.3.2"
+
+[[projects]]
+  digest = "1:582b704bebaa06b48c29b0cec224a6058a09c86883aaddabde889cd1a5f73e1b"
+  name = "github.com/google/uuid"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "0cd6bf5da1e1c83f8b45653022c74f71af0538a4"
+  version = "v1.1.1"
 
 [[projects]]
   digest = "1:cbec35fe4d5a4fba369a656a8cd65e244ea2c743007d8f6c1ccb132acf9d1296"
@@ -294,25 +325,6 @@
   packages = ["capability"]
   pruneopts = "UT"
   revision = "d98352740cb2c55f81556b63d4a1ec64c5a319c2"
-
-[[projects]]
-  digest = "1:2d9d06cb9d46dacfdbb45f8575b39fc0126d083841a29d4fbf8d97708f43107e"
-  name = "github.com/vishvananda/netlink"
-  packages = [
-    ".",
-    "nl",
-  ]
-  pruneopts = "UT"
-  revision = "a2ad57a690f3caf3015351d2d6e1c0b95c349752"
-  version = "v1.0.0"
-
-[[projects]]
-  branch = "master"
-  digest = "1:975cb0c04431bf92e60b636a15897c4a3faba9f7dc04da505646630ac91d29d3"
-  name = "github.com/vishvananda/netns"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "0a2b9b5464df8343199164a0321edf3313202f7e"
 
 [[projects]]
   digest = "1:aed53a5fa03c1270457e331cf8b7e210e3088a2278fec552c5c5d29c1664e161"
@@ -448,9 +460,10 @@
     "github.com/alexellis/faasd/pkg/service",
     "github.com/containerd/containerd",
     "github.com/containerd/containerd/cio",
-    "github.com/containerd/containerd/containers",
     "github.com/containerd/containerd/namespaces",
     "github.com/containerd/containerd/oci",
+    "github.com/containerd/go-cni",
+    "github.com/google/uuid",
     "github.com/gorilla/mux",
     "github.com/opencontainers/runtime-spec/specs-go",
     "github.com/openfaas/faas-provider",
@@ -458,8 +471,6 @@
     "github.com/openfaas/faas-provider/types",
     "github.com/openfaas/faas/gateway/requests",
     "github.com/pkg/errors",
-    "github.com/vishvananda/netlink",
-    "github.com/vishvananda/netns",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1
