@@ -18,14 +18,14 @@
   name = "github.com/openfaas/faas-provider"
   version = "0.14.0"
 
-[[constraint]]
-  name = "github.com/vishvananda/netlink"
-  version = "1.0.0"
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/vishvananda/netns"
-
 [prune]
   go-tests = true
   unused-packages = true
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/containerd/go-cni"
+
+[[constraint]]
+  name = "github.com/google/uuid"
+  version = "1.1.1"

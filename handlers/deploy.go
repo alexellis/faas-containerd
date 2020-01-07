@@ -6,22 +6,42 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"net"
 	"net/http"
 	"os"
-	"os/exec"
 	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/alexellis/faasd/pkg/service"
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/cio"
-	"github.com/containerd/containerd/containers"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
+	gocni "github.com/containerd/go-cni"
+	"github.com/google/uuid"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/openfaas/faas-provider/types"
 	"github.com/pkg/errors"
+)
+
+const (
+	// TODO: CNIBinDir and CNIConfDir should maybe be globally configurable?
+	// CNIBinDir describes the directory where the CNI binaries are stored
+	CNIBinDir = "/opt/cni/bin"
+	// CNIConfDir describes the directory where the CNI plugin's configuration is stored
+	CNIConfDir = "/etc/cni/net.d"
+	// netNSPathFmt gives the path to the a process network namespace, given the pid
+	NetNSPathFmt = "/proc/%d/ns/net"
+
+	// defaultCNIConfFilename is the vanity filename of default CNI configuration file
+	DefaultCNIConfFilename = "10-openfaas.conflist"
+	// defaultNetworkName names the "docker-bridge"-like CNI plugin-chain installed when no other CNI configuration is present.
+	// This value appears in iptables comments created by CNI.
+	DefaultNetworkName = "openfaas-cni-bridge"
+	// defaultBridgeName is the default bridge device name used in the defaultCNIConf
+	DefaultBridgeName = "openfaas0"
+	// defaultSubnet is the default subnet used in the defaultCNIConf -- this value is set to not collide with common container networking subnets:
+	DefaultSubnet = "10.62.0.0/16"
 )
 
 func MakeDeployHandler(client *containerd.Client, serviceMap *ServiceMap) func(w http.ResponseWriter, r *http.Request) {
@@ -81,7 +101,6 @@ func deploy(ctx context.Context, req types.FunctionDeployment, client *container
 	log.Printf("Deploy %s size: %d\n", image.Name(), size)
 
 	envs := prepareEnv(req.EnvProcess, req.EnvVars)
-	hook := prepareHook()
 	mounts := getMounts()
 
 	name := req.Service
@@ -95,8 +114,7 @@ func deploy(ctx context.Context, req types.FunctionDeployment, client *container
 		containerd.WithNewSpec(oci.WithImageConfig(image),
 			oci.WithCapabilities([]string{"CAP_NET_RAW"}),
 			oci.WithMounts(mounts),
-			oci.WithEnv(envs),
-			hook),
+			oci.WithEnv(envs)),
 	)
 
 	if err != nil {
@@ -110,11 +128,31 @@ func deploy(ctx context.Context, req types.FunctionDeployment, client *container
 
 	log.Printf("Container ID: %s\tTask ID %s:\tTask PID: %d\t\n", container.ID(), task.ID(), task.Pid())
 
-	ip, netErr := getIP("netns0", int(task.Pid()))
+	id := uuid.New().String()
+	netns := fmt.Sprintf(NetNSPathFmt, task.Pid())
 
-	if netErr != nil {
-		return netErr
+	cni, err := gocni.New(gocni.WithPluginConfDir(CNIConfDir),
+		gocni.WithPluginDir([]string{CNIBinDir}))
+
+	if err != nil {
+		return err
 	}
+
+	// Load the cni configuration
+	if err := cni.Load(gocni.WithLoNetwork, gocni.WithConfFile(filepath.Join(CNIConfDir, DefaultCNIConfFilename))); err != nil {
+		log.Fatalf("failed to load cni configuration: %v", err)
+	}
+
+	labels := map[string]string{}
+
+	result, err := cni.Setup(ctx, id, netns, gocni.WithLabels(labels))
+	if err != nil {
+		return errors.Wrapf(err, "failed to setup network for namespace %q: %v", id, err)
+	}
+
+	// Get the IP of the default interface.
+	defaultInterface := gocni.DefaultPrefix + "0"
+	ip := &result.Interfaces[defaultInterface].IPConfigs[0].IP
 
 	serviceMap.Add(name, ip)
 
@@ -130,22 +168,6 @@ func deploy(ctx context.Context, req types.FunctionDeployment, client *container
 	}
 
 	return nil
-}
-
-func getIP(bridge string, pid int) (*net.IP, error) {
-	// https://github.com/weaveworks/weave/blob/master/net/netdev.go
-
-	peerIDs, err := ConnectedToBridgeVethPeerIds(bridge)
-	if err != nil {
-		return nil, fmt.Errorf("Unable to find peers on: %s %s", bridge, err)
-	}
-
-	addrs, addrsErr := GetNetDevsByVethPeerIds(pid, peerIDs)
-	if addrsErr != nil {
-		return nil, fmt.Errorf("Unable to find address for veth pair using: %v %s", peerIDs, addrsErr)
-	}
-	return &addrs[0].CIDRs[0].IP, nil
-
 }
 
 func prepareEnv(envProcess string, reqEnvVars map[string]string) []string {
@@ -168,31 +190,6 @@ func prepareEnv(envProcess string, reqEnvVars map[string]string) []string {
 		envs = append(envs, fprocess)
 	}
 	return envs
-}
-
-func prepareHook() func(_ context.Context, _ oci.Client, _ *containers.Container, s *specs.Spec) error {
-	return func(_ context.Context, _ oci.Client, _ *containers.Container, s *specs.Spec) error {
-		if s.Hooks == nil {
-			s.Hooks = &specs.Hooks{}
-		}
-
-		netnsPath, err := exec.LookPath("netns")
-		log.Printf("netnsPath: %s\n", netnsPath)
-		if err != nil {
-			return err
-		}
-
-		s.Hooks.Prestart = []specs.Hook{
-			{
-				Path: netnsPath,
-				Args: []string{
-					"netns",
-				},
-				Env: os.Environ(),
-			},
-		}
-		return nil
-	}
 }
 
 func getMounts() []specs.Mount {
