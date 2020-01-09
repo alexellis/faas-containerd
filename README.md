@@ -143,9 +143,26 @@ Install the CNI plugins like this:
 
 ```sh
 export CNI_VERSION=v0.8.2
-export ARCH=$([ $(uname -m) = "x86_64" ] && echo amd64 || echo arm64)
+
+```
+
+* For PC run `export ARCH=amd64`
+* For RPi/armhf run `export ARCH=arm`
+* For arm64 run `export ARCH=arm64`
+
+Then run:
+
+```
 mkdir -p /opt/cni/bin
 curl -sSL https://github.com/containernetworking/plugins/releases/download/${CNI_VERSION}/cni-plugins-linux-${ARCH}-${CNI_VERSION}.tgz | tar -xz -C /opt/cni/bin
+```
+
+Check it worked:
+
+```
+/opt/cni/bin/bridge --help
+
+CNI bridge plugin v0.8.2
 ```
 
 ### Enable forwarding
