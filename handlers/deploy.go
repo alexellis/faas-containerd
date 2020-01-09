@@ -139,7 +139,7 @@ func deploy(ctx context.Context, req types.FunctionDeployment, client *container
 	}
 
 	// Load the cni configuration
-	if err := cni.Load(gocni.WithLoNetwork, gocni.WithConfFile(filepath.Join(CNIConfDir, DefaultCNIConfFilename))); err != nil {
+	if err := cni.Load(gocni.WithLoNetwork, gocni.WithConfListFile(filepath.Join(CNIConfDir, DefaultCNIConfFilename))); err != nil {
 		log.Fatalf("failed to load cni configuration: %v", err)
 	}
 
