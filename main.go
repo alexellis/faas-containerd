@@ -27,23 +27,28 @@ var (
 )
 
 // defaultCNIConf is a CNI configuration that enables network access to containers (docker-bridge style)
-var defaultCNIConf = fmt.Sprintf(`{
-	"cniVersion": "0.4.0",
-	"name": "%s",
-	"type": "bridge",
-	"bridge": "%s",
-	"isGateway": true,
-	"isDefaultGateway": true,
-	"promiscMode": true,
-	"ipMasq": true,
-	"ipam": {
-		"type": "host-local",
-		"ranges": [
-			[{
-				"subnet": "%s"
-			}]
-		]
-	}
+var defaultCNIConf = fmt.Sprintf(`
+{
+    "cniVersion": "0.4.0",
+    "name": "%s",
+    "plugins": [
+      {
+        "type": "bridge",
+        "bridge": "%s",
+        "isGateway": true,
+        "ipMasq": true,
+        "ipam": {
+            "type": "host-local",
+            "subnet": "%s",
+            "routes": [
+                { "dst": "0.0.0.0/0" }
+            ]
+        }
+      },
+      {
+        "type": "firewall"
+      }
+    ]
 }
 `, handlers.DefaultNetworkName, handlers.DefaultBridgeName, handlers.DefaultSubnet)
 
@@ -81,18 +86,16 @@ func Start() {
 
 	netConfig := path.Join(handlers.CNIConfDir, handlers.DefaultCNIConfFilename)
 
-	if exists, _ := pathExists(netConfig); !exists {
-		log.Printf("Writing network config...\n")
-
-		if !dirExists(handlers.CNIConfDir) {
-			if err := os.MkdirAll(handlers.CNIConfDir, 0755); err != nil {
-				log.Fatalln(fmt.Errorf("cannot create directory: %s", handlers.CNIConfDir).Error())
-			}
+	log.Printf("Writing network config...\n")
+	if !dirExists(handlers.CNIConfDir) {
+		if err := os.MkdirAll(handlers.CNIConfDir, 0755); err != nil {
+			log.Fatalln(fmt.Errorf("cannot create directory: %s", handlers.CNIConfDir).Error())
 		}
+	}
 
-		if err := ioutil.WriteFile(netConfig, []byte(defaultCNIConf), 644); err != nil {
-			log.Fatalln(fmt.Errorf("cannot write network config: %s", handlers.DefaultCNIConfFilename).Error())
-		}
+	if err := ioutil.WriteFile(netConfig, []byte(defaultCNIConf), 644); err != nil {
+		log.Fatalln(fmt.Errorf("cannot write network config: %s", handlers.DefaultCNIConfFilename).Error())
+
 	}
 
 	serviceMap := handlers.NewServiceMap()
