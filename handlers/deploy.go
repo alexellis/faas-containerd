@@ -152,6 +152,15 @@ func deploy(ctx context.Context, req types.FunctionDeployment, client *container
 
 	// Get the IP of the default interface.
 	defaultInterface := gocni.DefaultPrefix + "0"
+
+	if _, ok := result.Interfaces[defaultInterface]; !ok {
+		return fmt.Errorf("failed to find interface %q", defaultInterface)
+	}
+	if result.Interfaces[defaultInterface].IPConfigs != nil &&
+		len(result.Interfaces[defaultInterface].IPConfigs) == 0 {
+		return fmt.Errorf("failed to find IP for interface %q, no configs found", defaultInterface)
+	}
+
 	ip := &result.Interfaces[defaultInterface].IPConfigs[0].IP
 
 	serviceMap.Add(name, ip)
