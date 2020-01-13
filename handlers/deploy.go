@@ -150,22 +150,15 @@ func deploy(ctx context.Context, req types.FunctionDeployment, client *container
 		return errors.Wrapf(err, "failed to setup network for namespace %q: %v", id, err)
 	}
 
-	// Get the IP of the default interface.
-	defaultInterface := gocni.DefaultPrefix + "0"
-
-	if _, ok := result.Interfaces[defaultInterface]; !ok {
-		return fmt.Errorf("failed to find interface %q", defaultInterface)
+	// Get the IP of the created interface
+	for _, config := range result.Interfaces {
+		if config.Sandbox == netns {
+			for _, ipConfig := range config.IPConfigs {
+				serviceMap.Add(name, &ipConfig.IP)
+				log.Printf("%s has IP: %s.\n", name, &ipConfig.IP)
+			}
+		}
 	}
-	if result.Interfaces[defaultInterface].IPConfigs != nil &&
-		len(result.Interfaces[defaultInterface].IPConfigs) == 0 {
-		return fmt.Errorf("failed to find IP for interface %q, no configs found", defaultInterface)
-	}
-
-	ip := &result.Interfaces[defaultInterface].IPConfigs[0].IP
-
-	serviceMap.Add(name, ip)
-
-	log.Printf("%s has IP: %s\n", name, ip.String())
 
 	_, waitErr := task.Wait(ctx)
 	if waitErr != nil {
