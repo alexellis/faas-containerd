@@ -11,10 +11,11 @@ import (
 	"github.com/alexellis/faasd/pkg/service"
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/namespaces"
+	gocni "github.com/containerd/go-cni"
 	"github.com/openfaas/faas-provider/types"
 )
 
-func MakeUpdateHandler(client *containerd.Client, serviceMap *ServiceMap) func(w http.ResponseWriter, r *http.Request) {
+func MakeUpdateHandler(client *containerd.Client, serviceMap *ServiceMap, cni gocni.CNI) func(w http.ResponseWriter, r *http.Request) {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 
@@ -56,7 +57,7 @@ func MakeUpdateHandler(client *containerd.Client, serviceMap *ServiceMap) func(w
 
 		serviceMap.Delete(name)
 
-		deployErr := deploy(ctx, req, client, serviceMap)
+		deployErr := deploy(ctx, req, client, serviceMap, cni)
 		if deployErr != nil {
 			log.Printf("[Update] error deploying %s, error: %s\n", name, deployErr)
 			http.Error(w, deployErr.Error(), http.StatusBadRequest)

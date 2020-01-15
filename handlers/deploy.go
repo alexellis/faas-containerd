@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"os"
 	"path"
-	"path/filepath"
 	"strings"
 
 	"github.com/alexellis/faasd/pkg/service"
@@ -18,33 +17,12 @@ import (
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
 	gocni "github.com/containerd/go-cni"
-	"github.com/google/uuid"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/openfaas/faas-provider/types"
 	"github.com/pkg/errors"
 )
 
-const (
-	// TODO: CNIBinDir and CNIConfDir should maybe be globally configurable?
-	// CNIBinDir describes the directory where the CNI binaries are stored
-	CNIBinDir = "/opt/cni/bin"
-	// CNIConfDir describes the directory where the CNI plugin's configuration is stored
-	CNIConfDir = "/etc/cni/net.d"
-	// netNSPathFmt gives the path to the a process network namespace, given the pid
-	NetNSPathFmt = "/proc/%d/ns/net"
-
-	// defaultCNIConfFilename is the vanity filename of default CNI configuration file
-	DefaultCNIConfFilename = "10-openfaas.conflist"
-	// defaultNetworkName names the "docker-bridge"-like CNI plugin-chain installed when no other CNI configuration is present.
-	// This value appears in iptables comments created by CNI.
-	DefaultNetworkName = "openfaas-cni-bridge"
-	// defaultBridgeName is the default bridge device name used in the defaultCNIConf
-	DefaultBridgeName = "openfaas0"
-	// defaultSubnet is the default subnet used in the defaultCNIConf -- this value is set to not collide with common container networking subnets:
-	DefaultSubnet = "10.62.0.0/16"
-)
-
-func MakeDeployHandler(client *containerd.Client, serviceMap *ServiceMap) func(w http.ResponseWriter, r *http.Request) {
+func MakeDeployHandler(client *containerd.Client, serviceMap *ServiceMap, cni gocni.CNI) func(w http.ResponseWriter, r *http.Request) {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 
@@ -71,7 +49,7 @@ func MakeDeployHandler(client *containerd.Client, serviceMap *ServiceMap) func(w
 
 		ctx := namespaces.WithNamespace(context.Background(), "openfaas-fn")
 
-		deployErr := deploy(ctx, req, client, serviceMap)
+		deployErr := deploy(ctx, req, client, serviceMap, cni)
 		if deployErr != nil {
 			log.Printf("[Deploy] error deploying %s, error: %s\n", name, deployErr)
 			http.Error(w, deployErr.Error(), http.StatusBadRequest)
@@ -80,7 +58,7 @@ func MakeDeployHandler(client *containerd.Client, serviceMap *ServiceMap) func(w
 	}
 }
 
-func deploy(ctx context.Context, req types.FunctionDeployment, client *containerd.Client, serviceMap *ServiceMap) error {
+func deploy(ctx context.Context, req types.FunctionDeployment, client *containerd.Client, serviceMap *ServiceMap, cni gocni.CNI) error {
 
 	imgRef := "docker.io/" + req.Image
 	if strings.Index(req.Image, ":") == -1 {
@@ -128,44 +106,19 @@ func deploy(ctx context.Context, req types.FunctionDeployment, client *container
 
 	log.Printf("Container ID: %s\tTask ID %s:\tTask PID: %d\t\n", container.ID(), task.ID(), task.Pid())
 
-	id := uuid.New().String()
-	netns := fmt.Sprintf(NetNSPathFmt, task.Pid())
-
-	cni, err := gocni.New(gocni.WithPluginConfDir(CNIConfDir),
-		gocni.WithPluginDir([]string{CNIBinDir}))
+	labels := map[string]string{}
+	network, err := CreateCNINetwork(ctx, cni, task, labels)
 
 	if err != nil {
 		return err
 	}
 
-	// Load the cni configuration
-	if err := cni.Load(gocni.WithLoNetwork, gocni.WithConfListFile(filepath.Join(CNIConfDir, DefaultCNIConfFilename))); err != nil {
-		log.Fatalf("failed to load cni configuration: %v", err)
-	}
-
-	labels := map[string]string{}
-
-	result, err := cni.Setup(ctx, id, netns, gocni.WithLabels(labels))
+	ip, err := GetIPAddress(network, task)
 	if err != nil {
-		return errors.Wrapf(err, "failed to setup network for namespace %q: %v", id, err)
+		return err
 	}
-
-	// Get the IP of the default interface.
-	defaultInterface := gocni.DefaultPrefix + "0"
-
-	if _, ok := result.Interfaces[defaultInterface]; !ok {
-		return fmt.Errorf("failed to find interface %q", defaultInterface)
-	}
-	if result.Interfaces[defaultInterface].IPConfigs != nil &&
-		len(result.Interfaces[defaultInterface].IPConfigs) == 0 {
-		return fmt.Errorf("failed to find IP for interface %q, no configs found", defaultInterface)
-	}
-
-	ip := &result.Interfaces[defaultInterface].IPConfigs[0].IP
-
-	serviceMap.Add(name, ip)
-
-	log.Printf("%s has IP: %s\n", name, ip.String())
+	serviceMap.Add(name, &ip)
+	log.Printf("%s has IP: %s.\n", name, ip.String())
 
 	_, waitErr := task.Wait(ctx)
 	if waitErr != nil {
