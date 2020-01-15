@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -25,32 +24,6 @@ var (
 	Version   string
 	GitCommit string
 )
-
-// defaultCNIConf is a CNI configuration that enables network access to containers (docker-bridge style)
-var defaultCNIConf = fmt.Sprintf(`
-{
-    "cniVersion": "0.4.0",
-    "name": "%s",
-    "plugins": [
-      {
-        "type": "bridge",
-        "bridge": "%s",
-        "isGateway": true,
-        "ipMasq": true,
-        "ipam": {
-            "type": "host-local",
-            "subnet": "%s",
-            "routes": [
-                { "dst": "0.0.0.0/0" }
-            ]
-        }
-      },
-      {
-        "type": "firewall"
-      }
-    ]
-}
-`, handlers.DefaultNetworkName, handlers.DefaultBridgeName, handlers.DefaultSubnet)
 
 func main() {
 	Start()
@@ -84,18 +57,9 @@ func Start() {
 		log.Fatalln(fmt.Errorf("cannot write resolv.conf file: %s", writeResolvErr).Error())
 	}
 
-	netConfig := path.Join(handlers.CNIConfDir, handlers.DefaultCNIConfFilename)
-
-	log.Printf("Writing network config...\n")
-	if !dirExists(handlers.CNIConfDir) {
-		if err := os.MkdirAll(handlers.CNIConfDir, 0755); err != nil {
-			log.Fatalln(fmt.Errorf("cannot create directory: %s", handlers.CNIConfDir).Error())
-		}
-	}
-
-	if err := ioutil.WriteFile(netConfig, []byte(defaultCNIConf), 644); err != nil {
-		log.Fatalln(fmt.Errorf("cannot write network config: %s", handlers.DefaultCNIConfFilename).Error())
-
+	cni, err := handlers.InitNetwork()
+	if err != nil {
+		panic(err)
 	}
 
 	serviceMap := handlers.NewServiceMap()
@@ -112,11 +76,11 @@ func Start() {
 	bootstrapHandlers := types.FaaSHandlers{
 		FunctionProxy:        proxy.NewHandlerFunc(*config, invokeResolver),
 		DeleteHandler:        handlers.MakeDeleteHandler(client, serviceMap),
-		DeployHandler:        handlers.MakeDeployHandler(client, serviceMap),
+		DeployHandler:        handlers.MakeDeployHandler(client, serviceMap, cni),
 		FunctionReader:       handlers.MakeReadHandler(client, serviceMap),
 		ReplicaReader:        handlers.MakeReplicaReaderHandler(client, serviceMap),
 		ReplicaUpdater:       handlers.MakeReplicaUpdateHandler(client, serviceMap),
-		UpdateHandler:        handlers.MakeUpdateHandler(client, serviceMap),
+		UpdateHandler:        handlers.MakeUpdateHandler(client, serviceMap, cni),
 		HealthHandler:        func(w http.ResponseWriter, r *http.Request) {},
 		InfoHandler:          handlers.MakeInfoHandler(Version, GitCommit),
 		ListNamespaceHandler: listNamespaces(),
@@ -132,40 +96,4 @@ func listNamespaces() func(w http.ResponseWriter, r *http.Request) {
 		out, _ := json.Marshal(list)
 		w.Write(out)
 	}
-}
-
-func dirEmpty(dirname string) (b bool) {
-	if !dirExists(dirname) {
-		return
-	}
-
-	f, err := os.Open(dirname)
-	if err != nil {
-		return
-	}
-	defer func() { _ = f.Close() }()
-
-	// If the first file is EOF, the directory is empty
-	if _, err = f.Readdir(1); err == io.EOF {
-		b = true
-	}
-	return
-}
-
-func dirExists(dirname string) bool {
-	exists, info := pathExists(dirname)
-	if !exists {
-		return false
-	}
-
-	return info.IsDir()
-}
-
-func pathExists(path string) (bool, os.FileInfo) {
-	info, err := os.Stat(path)
-	if os.IsNotExist(err) {
-		return false, nil
-	}
-
-	return true, info
 }
