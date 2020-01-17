@@ -25,3 +25,11 @@
 [[constraint]]
   branch = "master"
   name = "github.com/containerd/go-cni"
+
+[[constraint]]
+  name = "github.com/vishvananda/netlink"
+  version = "1.0.0"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/vishvananda/netns"

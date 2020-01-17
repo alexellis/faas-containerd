@@ -22,7 +22,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func MakeDeployHandler(client *containerd.Client, serviceMap *ServiceMap, cni gocni.CNI) func(w http.ResponseWriter, r *http.Request) {
+func MakeDeployHandler(client *containerd.Client, cni gocni.CNI) func(w http.ResponseWriter, r *http.Request) {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 
@@ -47,9 +47,9 @@ func MakeDeployHandler(client *containerd.Client, serviceMap *ServiceMap, cni go
 
 		name := req.Service
 
-		ctx := namespaces.WithNamespace(context.Background(), "openfaas-fn")
+		ctx := namespaces.WithNamespace(context.Background(), FunctionNamespace)
 
-		deployErr := deploy(ctx, req, client, serviceMap, cni)
+		deployErr := deploy(ctx, req, client, cni)
 		if deployErr != nil {
 			log.Printf("[Deploy] error deploying %s, error: %s\n", name, deployErr)
 			http.Error(w, deployErr.Error(), http.StatusBadRequest)
@@ -58,7 +58,7 @@ func MakeDeployHandler(client *containerd.Client, serviceMap *ServiceMap, cni go
 	}
 }
 
-func deploy(ctx context.Context, req types.FunctionDeployment, client *containerd.Client, serviceMap *ServiceMap, cni gocni.CNI) error {
+func deploy(ctx context.Context, req types.FunctionDeployment, client *containerd.Client, cni gocni.CNI) error {
 
 	imgRef := "docker.io/" + req.Image
 	if strings.Index(req.Image, ":") == -1 {
@@ -117,7 +117,6 @@ func deploy(ctx context.Context, req types.FunctionDeployment, client *container
 	if err != nil {
 		return err
 	}
-	serviceMap.Add(name, &ip)
 	log.Printf("%s has IP: %s.\n", name, ip.String())
 
 	_, waitErr := task.Wait(ctx)

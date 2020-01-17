@@ -15,7 +15,7 @@ import (
 	"github.com/openfaas/faas-provider/types"
 )
 
-func MakeUpdateHandler(client *containerd.Client, serviceMap *ServiceMap, cni gocni.CNI) func(w http.ResponseWriter, r *http.Request) {
+func MakeUpdateHandler(client *containerd.Client, cni gocni.CNI) func(w http.ResponseWriter, r *http.Request) {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 
@@ -39,17 +39,20 @@ func MakeUpdateHandler(client *containerd.Client, serviceMap *ServiceMap, cni go
 		}
 		name := req.Service
 
-		if addr := serviceMap.Get(name); addr == nil {
+		function, err := GetFunction(client, name)
+		if err != nil {
 			msg := fmt.Sprintf("service %s not found", name)
 			log.Printf("[Update] %s\n", msg)
 			http.Error(w, msg, http.StatusNotFound)
 			return
 		}
 
-		ctx := namespaces.WithNamespace(context.Background(), "openfaas-fn")
-		err = DeleteCNINetwork(ctx, cni, client, name)
-		if err != nil {
-			log.Printf("[Delete] error removing CNI network for %s, %s\n", name, err)
+		ctx := namespaces.WithNamespace(context.Background(), FunctionNamespace)
+		if function.replicas != 0 {
+			err = DeleteCNINetwork(ctx, cni, client, name)
+			if err != nil {
+				log.Printf("[Update] error removing CNI network for %s, %s\n", name, err)
+			}
 		}
 
 		containerErr := service.Remove(ctx, client, name)
@@ -59,9 +62,7 @@ func MakeUpdateHandler(client *containerd.Client, serviceMap *ServiceMap, cni go
 			return
 		}
 
-		serviceMap.Delete(name)
-
-		deployErr := deploy(ctx, req, client, serviceMap, cni)
+		deployErr := deploy(ctx, req, client, cni)
 		if deployErr != nil {
 			log.Printf("[Update] error deploying %s, error: %s\n", name, deployErr)
 			http.Error(w, deployErr.Error(), http.StatusBadRequest)

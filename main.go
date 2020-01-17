@@ -62,25 +62,22 @@ func Start() {
 		panic(err)
 	}
 
-	serviceMap := handlers.NewServiceMap()
-
 	client, err := containerd.New(providerConfig.Sock)
 	if err != nil {
 		panic(err)
 	}
-
 	defer client.Close()
 
-	invokeResolver := handlers.NewInvokeResolver(serviceMap)
+	invokeResolver := handlers.NewInvokeResolver(client)
 
 	bootstrapHandlers := types.FaaSHandlers{
 		FunctionProxy:        proxy.NewHandlerFunc(*config, invokeResolver),
-		DeleteHandler:        handlers.MakeDeleteHandler(client, serviceMap, cni),
-		DeployHandler:        handlers.MakeDeployHandler(client, serviceMap, cni),
-		FunctionReader:       handlers.MakeReadHandler(client, serviceMap),
-		ReplicaReader:        handlers.MakeReplicaReaderHandler(client, serviceMap),
-		ReplicaUpdater:       handlers.MakeReplicaUpdateHandler(client, serviceMap),
-		UpdateHandler:        handlers.MakeUpdateHandler(client, serviceMap, cni),
+		DeleteHandler:        handlers.MakeDeleteHandler(client, cni),
+		DeployHandler:        handlers.MakeDeployHandler(client, cni),
+		FunctionReader:       handlers.MakeReadHandler(client),
+		ReplicaReader:        handlers.MakeReplicaReaderHandler(client),
+		ReplicaUpdater:       handlers.MakeReplicaUpdateHandler(client),
+		UpdateHandler:        handlers.MakeUpdateHandler(client, cni),
 		HealthHandler:        func(w http.ResponseWriter, r *http.Request) {},
 		InfoHandler:          handlers.MakeInfoHandler(Version, GitCommit),
 		ListNamespaceHandler: listNamespaces(),

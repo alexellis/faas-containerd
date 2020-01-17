@@ -13,7 +13,7 @@ import (
 	"github.com/openfaas/faas-provider/types"
 )
 
-func MakeReplicaUpdateHandler(client *containerd.Client, serviceMap *ServiceMap) func(w http.ResponseWriter, r *http.Request) {
+func MakeReplicaUpdateHandler(client *containerd.Client) func(w http.ResponseWriter, r *http.Request) {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 
@@ -38,14 +38,14 @@ func MakeReplicaUpdateHandler(client *containerd.Client, serviceMap *ServiceMap)
 
 		name := req.ServiceName
 
-		if addr := serviceMap.Get(name); addr == nil {
+		if _, err := GetFunction(client, name); err != nil {
 			msg := fmt.Sprintf("service %s not found", name)
 			log.Printf("[Scale] %s\n", msg)
 			http.Error(w, msg, http.StatusNotFound)
 			return
 		}
 
-		ctx := namespaces.WithNamespace(context.Background(), "openfaas-fn")
+		ctx := namespaces.WithNamespace(context.Background(), FunctionNamespace)
 
 		ctr, ctrErr := client.LoadContainer(ctx, name)
 		if ctrErr != nil {
