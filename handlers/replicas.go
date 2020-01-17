@@ -9,18 +9,18 @@ import (
 	"github.com/openfaas/faas-provider/types"
 )
 
-func MakeReplicaReaderHandler(client *containerd.Client, serviceMap *ServiceMap) func(w http.ResponseWriter, r *http.Request) {
+func MakeReplicaReaderHandler(client *containerd.Client) func(w http.ResponseWriter, r *http.Request) {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		functionName := vars["name"]
 
-		if addr := serviceMap.Get(functionName); addr != nil {
+		if f, err := GetFunction(client, functionName); err == nil {
 			found := types.FunctionStatus{
 				Name:              functionName,
-				AvailableReplicas: 1,
-				Replicas:          1,
-				// Namespace:         "openfaas-fn",
+				AvailableReplicas: uint64(f.replicas),
+				Replicas:          uint64(f.replicas),
+				Namespace:         f.namespace,
 			}
 
 			functionBytes, _ := json.Marshal(found)

@@ -4,25 +4,26 @@ import (
 	"fmt"
 	"log"
 	"net/url"
+
+	"github.com/containerd/containerd"
 )
 
 type InvokeResolver struct {
-	serviceMap *ServiceMap
+	client *containerd.Client
 }
 
-func NewInvokeResolver(serviceMap *ServiceMap) *InvokeResolver {
-	return &InvokeResolver{
-		serviceMap: serviceMap,
-	}
+func NewInvokeResolver(client *containerd.Client) *InvokeResolver {
+	return &InvokeResolver{client: client}
 }
 
 func (i *InvokeResolver) Resolve(functionName string) (url.URL, error) {
 	log.Printf("Resolve: %q\n", functionName)
 
-	serviceIP := i.serviceMap.Get(functionName)
-	if serviceIP == nil {
+	fun, err := GetFunction(i.client, functionName)
+	if err != nil {
 		return url.URL{}, fmt.Errorf("not found")
 	}
+	serviceIP := fun.IP
 
 	const watchdogPort = 8080
 

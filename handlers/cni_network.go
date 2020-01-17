@@ -109,10 +109,12 @@ func DeleteCNINetwork(ctx context.Context, cni gocni.CNI, client *containerd.Cli
 	container, containerErr := client.LoadContainer(ctx, name)
 	if containerErr == nil {
 		task, err := container.Task(ctx, nil)
-		log.Printf("[Delete] removing CNI network for %s\n", task.ID())
 		if err != nil {
-			return errors.Wrapf(err, "Unable to get task for container %s: %s", name, err)
+			log.Printf("[Delete] container %s does not have task\n", name)
+			return nil
 		}
+
+		log.Printf("[Delete] removing CNI network for %s\n", task.ID())
 
 		id := NetID(task)
 		netns := NetNamespace(task)
@@ -145,6 +147,22 @@ func GetIPAddress(result *gocni.CNIResult, task containerd.Task) (net.IP, error)
 		return nil, fmt.Errorf("Unable to get IP address for %s", task.ID())
 	}
 	return ip, nil
+}
+
+func GetIPfromPID(pid int) (*net.IP, error) {
+	// https://github.com/weaveworks/weave/blob/master/net/netdev.go
+
+	peerIDs, err := ConnectedToBridgeVethPeerIds(defaultBridgeName)
+	if err != nil {
+		return nil, fmt.Errorf("Unable to find peers on: %s %s", defaultBridgeName, err)
+	}
+
+	addrs, addrsErr := GetNetDevsByVethPeerIds(pid, peerIDs)
+	if addrsErr != nil {
+		return nil, fmt.Errorf("Unable to find address for veth pair using: %v %s", peerIDs, addrsErr)
+	}
+	return &addrs[0].CIDRs[0].IP, nil
+
 }
 
 // NetID generates the network IF based on task name and task PID
