@@ -47,6 +47,10 @@ func MakeUpdateHandler(client *containerd.Client, serviceMap *ServiceMap, cni go
 		}
 
 		ctx := namespaces.WithNamespace(context.Background(), "openfaas-fn")
+		err = DeleteCNINetwork(ctx, cni, client, name)
+		if err != nil {
+			log.Printf("[Delete] error removing CNI network for %s, %s\n", name, err)
+		}
 
 		containerErr := service.Remove(ctx, client, name)
 		if containerErr != nil {
