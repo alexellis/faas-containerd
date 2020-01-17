@@ -98,10 +98,34 @@ func CreateCNINetwork(ctx context.Context, cni gocni.CNI, task containerd.Task, 
 	netns := NetNamespace(task)
 	result, err := cni.Setup(ctx, id, netns, gocni.WithLabels(labels))
 	if err != nil {
-		return nil, errors.Wrapf(err, "Failed to setup network for namespace %q: %v", id, err)
+		return nil, errors.Wrapf(err, "Failed to setup network for task %q: %v", id, err)
 	}
 
 	return result, nil
+}
+
+// DeleteCNINetwork deletes a CNI network based on task ID and Pid
+func DeleteCNINetwork(ctx context.Context, cni gocni.CNI, client *containerd.Client, name string) error {
+	container, containerErr := client.LoadContainer(ctx, name)
+	if containerErr == nil {
+		task, err := container.Task(ctx, nil)
+		log.Printf("[Delete] removing CNI network for %s\n", task.ID())
+		if err != nil {
+			return errors.Wrapf(err, "Unable to get task for container %s: %s", name, err)
+		}
+
+		id := NetID(task)
+		netns := NetNamespace(task)
+
+		if err := cni.Remove(ctx, id, netns); err != nil {
+			return errors.Wrapf(err, "Failed to remove network for task %q: %v", id, err)
+		}
+		log.Printf("[Delete] removed %s with namespace %s and ID %s\n", name, netns, id)
+
+		return nil
+	}
+
+	return errors.Wrapf(containerErr, "Container %s not found: %s", name, containerErr)
 }
 
 // GetIPAddress returns the IP address of the created container
@@ -125,7 +149,7 @@ func GetIPAddress(result *gocni.CNIResult, task containerd.Task) (net.IP, error)
 
 // NetID generates the network IF based on task name and task PID
 func NetID(task containerd.Task) string {
-	id, _ := fmt.Printf("%s-%d", task.ID(), task.Pid())
+	return fmt.Sprintf("%s-%d", task.ID(), task.Pid())
 }
 
 // NetNamespace generates the namespace path based on task PID.

@@ -75,7 +75,7 @@ func Start() {
 
 	bootstrapHandlers := types.FaaSHandlers{
 		FunctionProxy:        proxy.NewHandlerFunc(*config, invokeResolver),
-		DeleteHandler:        handlers.MakeDeleteHandler(client, serviceMap),
+		DeleteHandler:        handlers.MakeDeleteHandler(client, serviceMap, cni),
 		DeployHandler:        handlers.MakeDeployHandler(client, serviceMap, cni),
 		FunctionReader:       handlers.MakeReadHandler(client, serviceMap),
 		ReplicaReader:        handlers.MakeReplicaReaderHandler(client, serviceMap),

@@ -11,10 +11,11 @@ import (
 	"github.com/alexellis/faasd/pkg/service"
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/namespaces"
+	gocni "github.com/containerd/go-cni"
 	"github.com/openfaas/faas/gateway/requests"
 )
 
-func MakeDeleteHandler(client *containerd.Client, serviceMap *ServiceMap) func(w http.ResponseWriter, r *http.Request) {
+func MakeDeleteHandler(client *containerd.Client, serviceMap *ServiceMap, cni gocni.CNI) func(w http.ResponseWriter, r *http.Request) {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 
@@ -47,6 +48,11 @@ func MakeDeleteHandler(client *containerd.Client, serviceMap *ServiceMap) func(w
 		}
 
 		ctx := namespaces.WithNamespace(context.Background(), "openfaas-fn")
+
+		err = DeleteCNINetwork(ctx, cni, client, name)
+		if err != nil {
+			log.Printf("[Delete] error removing CNI network for %s, %s\n", name, err)
+		}
 
 		containerErr := service.Remove(ctx, client, name)
 		if containerErr != nil {
