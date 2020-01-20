@@ -8,6 +8,8 @@ import (
 	"github.com/containerd/containerd"
 )
 
+const watchdogPort = 8080
+
 type InvokeResolver struct {
 	client *containerd.Client
 }
@@ -19,14 +21,12 @@ func NewInvokeResolver(client *containerd.Client) *InvokeResolver {
 func (i *InvokeResolver) Resolve(functionName string) (url.URL, error) {
 	log.Printf("Resolve: %q\n", functionName)
 
-	fun, err := GetFunction(i.client, functionName)
+	function, err := GetFunction(i.client, functionName)
 	if err != nil {
 		return url.URL{}, fmt.Errorf("%s not found", functionName)
 	}
 
-	serviceIP := fun.IP
-
-	const watchdogPort = 8080
+	serviceIP := function.IP
 
 	urlStr := fmt.Sprintf("http://%s:%d", serviceIP, watchdogPort)
 
