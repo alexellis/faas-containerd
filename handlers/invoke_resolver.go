@@ -21,8 +21,9 @@ func (i *InvokeResolver) Resolve(functionName string) (url.URL, error) {
 
 	fun, err := GetFunction(i.client, functionName)
 	if err != nil {
-		return url.URL{}, fmt.Errorf("not found")
+		return url.URL{}, fmt.Errorf("%s not found", functionName)
 	}
+
 	serviceIP := fun.IP
 
 	const watchdogPort = 8080

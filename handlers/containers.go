@@ -53,7 +53,7 @@ func GetFunction(client *containerd.Client, name string) (Function, error) {
 			// Task for container exists
 			svc, err := task.Status(ctx)
 			if err != nil {
-				return Function{}, fmt.Errorf("Unable to get task status for container: %s", name, err)
+				return Function{}, fmt.Errorf("unable to get task status for container: %s %s", name, err)
 			}
 			if svc.Status == "running" {
 				replicas = 1
@@ -67,5 +67,5 @@ func GetFunction(client *containerd.Client, name string) (Function, error) {
 		return f, nil
 
 	}
-	return Function{}, fmt.Errorf("Unable to find function %s: %s", name, err)
+	return Function{}, fmt.Errorf("unable to find function: %s, error %s", name, err)
 }

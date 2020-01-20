@@ -110,24 +110,24 @@ func DeleteCNINetwork(ctx context.Context, cni gocni.CNI, client *containerd.Cli
 	if containerErr == nil {
 		task, err := container.Task(ctx, nil)
 		if err != nil {
-			log.Printf("[Delete] container %s does not have task\n", name)
+			log.Printf("[Delete] unable to find task for container: %s\n", name)
 			return nil
 		}
 
-		log.Printf("[Delete] removing CNI network for %s\n", task.ID())
+		log.Printf("[Delete] removing CNI network for: %s\n", task.ID())
 
 		id := NetID(task)
 		netns := NetNamespace(task)
 
 		if err := cni.Remove(ctx, id, netns); err != nil {
-			return errors.Wrapf(err, "Failed to remove network for task %q: %v", id, err)
+			return errors.Wrapf(err, "Failed to remove network for task: %q, %v", id, err)
 		}
-		log.Printf("[Delete] removed %s with namespace %s and ID %s\n", name, netns, id)
+		log.Printf("[Delete] removed: %s from namespace: %s, ID: %s\n", name, netns, id)
 
 		return nil
 	}
 
-	return errors.Wrapf(containerErr, "Container %s not found: %s", name, containerErr)
+	return errors.Wrapf(containerErr, "Unable to find container: %s, error: %s", name, containerErr)
 }
 
 // GetIPAddress returns the IP address of the created container
@@ -144,7 +144,7 @@ func GetIPAddress(result *gocni.CNIResult, task containerd.Task) (net.IP, error)
 		}
 	}
 	if ip == nil {
-		return nil, fmt.Errorf("Unable to get IP address for %s", task.ID())
+		return nil, fmt.Errorf("unable to get IP address for: %s", task.ID())
 	}
 	return ip, nil
 }
@@ -154,12 +154,12 @@ func GetIPfromPID(pid int) (*net.IP, error) {
 
 	peerIDs, err := ConnectedToBridgeVethPeerIds(defaultBridgeName)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to find peers on: %s %s", defaultBridgeName, err)
+		return nil, fmt.Errorf("unable to find peers on: %s %s", defaultBridgeName, err)
 	}
 
 	addrs, addrsErr := GetNetDevsByVethPeerIds(pid, peerIDs)
 	if addrsErr != nil {
-		return nil, fmt.Errorf("Unable to find address for veth pair using: %v %s", peerIDs, addrsErr)
+		return nil, fmt.Errorf("unable to find address for veth pair using: %v %s", peerIDs, addrsErr)
 	}
 	return &addrs[0].CIDRs[0].IP, nil
 
