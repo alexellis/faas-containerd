@@ -10,10 +10,11 @@ import (
 
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/namespaces"
+	gocni "github.com/containerd/go-cni"
 	"github.com/openfaas/faas-provider/types"
 )
 
-func MakeReplicaUpdateHandler(client *containerd.Client) func(w http.ResponseWriter, r *http.Request) {
+func MakeReplicaUpdateHandler(client *containerd.Client, cni gocni.CNI) func(w http.ResponseWriter, r *http.Request) {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 
@@ -29,6 +30,7 @@ func MakeReplicaUpdateHandler(client *containerd.Client) func(w http.ResponseWri
 
 		req := types.ScaleServiceRequest{}
 		err := json.Unmarshal(body, &req)
+
 		if err != nil {
 			log.Printf("[Scale] error parsing input: %s\n", err)
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -55,26 +57,46 @@ func MakeReplicaUpdateHandler(client *containerd.Client) func(w http.ResponseWri
 			return
 		}
 
+		taskExists := true
 		task, taskErr := ctr.Task(ctx, nil)
 		if taskErr != nil {
 			msg := fmt.Sprintf("cannot load task for service %s, error: %s", name, taskErr)
 			log.Printf("[Scale] %s\n", msg)
-			http.Error(w, msg, http.StatusNotFound)
-			return
-		}
-		var scaleErr error
-		if req.Replicas == 0 {
-			scaleErr = task.Pause(ctx)
-		} else if req.Replicas == 1 {
-			scaleErr = task.Resume(ctx)
+			taskExists = false
 		}
 
-		if scaleErr != nil {
-			msg := fmt.Sprintf("cannot scale task for %s, error: %s", name, scaleErr)
-			log.Printf("[Scale] %s\n", msg)
-			http.Error(w, msg, http.StatusInternalServerError)
-			return
+		if req.Replicas > 0 {
+			if taskExists {
+				if status, statusErr := task.Status(ctx); statusErr == nil {
+					if status.Status == containerd.Paused {
+						if resumeErr := task.Resume(ctx); resumeErr != nil {
+							log.Printf("[Scale] error resuming task %s, error: %s\n", name, resumeErr)
+							http.Error(w, resumeErr.Error(), http.StatusBadRequest)
+						}
+					}
+				}
+			} else {
+				deployErr := createTask(ctx, client, ctr, cni)
+				if deployErr != nil {
+					log.Printf("[Scale] error deploying %s, error: %s\n", name, deployErr)
+					http.Error(w, deployErr.Error(), http.StatusBadRequest)
+					return
+				}
+				return
+			}
+		} else {
+			if taskExists {
+				if status, statusErr := task.Status(ctx); statusErr == nil {
+					if status.Status == containerd.Running {
+						if pauseErr := task.Pause(ctx); pauseErr != nil {
+							log.Printf("[Scale] error pausing task %s, error: %s\n", name, pauseErr)
+							http.Error(w, pauseErr.Error(), http.StatusBadRequest)
+						}
+					}
+				}
+			}
 		}
+
 	}
 
 }

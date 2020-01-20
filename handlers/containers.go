@@ -39,6 +39,7 @@ func ListFunctions(client *containerd.Client) (map[string]Function, error) {
 func GetFunction(client *containerd.Client, name string) (Function, error) {
 	ctx := namespaces.WithNamespace(context.Background(), FunctionNamespace)
 	c, err := client.LoadContainer(ctx, name)
+
 	if err == nil {
 
 		image, _ := c.Image(ctx)
@@ -47,6 +48,7 @@ func GetFunction(client *containerd.Client, name string) (Function, error) {
 			namespace: FunctionNamespace,
 			image:     image.Name(),
 		}
+
 		replicas := 0
 		task, err := c.Task(ctx, nil)
 		if err == nil {
@@ -62,7 +64,10 @@ func GetFunction(client *containerd.Client, name string) (Function, error) {
 				ip, _ := GetIPfromPID(int(task.Pid()))
 				f.IP = ip.String()
 			}
+		} else {
+			replicas = 0
 		}
+
 		f.replicas = replicas
 		return f, nil
 

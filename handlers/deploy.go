@@ -99,12 +99,19 @@ func deploy(ctx context.Context, req types.FunctionDeployment, client *container
 		return fmt.Errorf("unable to create container: %s, error: %s", name, err)
 	}
 
+	return createTask(ctx, client, container, cni)
+
+}
+
+func createTask(ctx context.Context, client *containerd.Client, container containerd.Container, cni gocni.CNI) error {
+
+	name := container.ID()
 	task, taskErr := container.NewTask(ctx, cio.NewCreator(cio.WithStdio))
 	if taskErr != nil {
 		return fmt.Errorf("unable to start task: %s, error: %s", name, taskErr)
 	}
 
-	log.Printf("Container ID: %s\tTask ID %s:\tTask PID: %d\t\n", container.ID(), task.ID(), task.Pid())
+	log.Printf("Container ID: %s\tTask ID %s:\tTask PID: %d\t\n", name, task.ID(), task.Pid())
 
 	labels := map[string]string{}
 	network, err := CreateCNINetwork(ctx, cni, task, labels)
@@ -127,7 +134,6 @@ func deploy(ctx context.Context, req types.FunctionDeployment, client *container
 	if startErr := task.Start(ctx); startErr != nil {
 		return errors.Wrapf(startErr, "Unable to start task: %s", name)
 	}
-
 	return nil
 }
 

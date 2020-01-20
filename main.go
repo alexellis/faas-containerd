@@ -76,7 +76,7 @@ func Start() {
 		DeployHandler:        handlers.MakeDeployHandler(client, cni),
 		FunctionReader:       handlers.MakeReadHandler(client),
 		ReplicaReader:        handlers.MakeReplicaReaderHandler(client),
-		ReplicaUpdater:       handlers.MakeReplicaUpdateHandler(client),
+		ReplicaUpdater:       handlers.MakeReplicaUpdateHandler(client, cni),
 		UpdateHandler:        handlers.MakeUpdateHandler(client, cni),
 		HealthHandler:        func(w http.ResponseWriter, r *http.Request) {},
 		InfoHandler:          handlers.MakeInfoHandler(Version, GitCommit),
