@@ -41,6 +41,14 @@ Goals:
 - [ ] Clean-up containers on exit
 - [ ] Give configuration for running faas-containerd / OpenFaaS gateway and Prometheus via systemd unit files or similar
 
+### An update - Jan 2020
+
+faas-containerd is now part of the [faasd](https://github.com/alexellis/faasd) project, which adds additional orchestration to bring the whole OpenFaaS experience and ecosystem to containerd.
+
+See my tutorial on how to get started with faasd. It is written for RPi users, but faasd is designed to be portable and also runs on x86_64 and ARM64:
+
+* [faasd - lightweight Serverless for your Raspberry Pi](https://blog.alexellis.io/faasd-for-lightweight-serverless/)
+
 ## Demo
 
 ![](https://pbs.twimg.com/media/EMEg1OEWkAAIDPO?format=jpg&name=medium)
